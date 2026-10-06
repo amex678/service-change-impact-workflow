@@ -18,6 +18,8 @@ gh repo create <owner>/service-change-impact-workflow --private --source . --pus
 
 ## 2. Authenticate the Copilot engine
 
+The workflow explicitly uses `gpt-5.4`, selected by the owner after the first run rejected the implicit model with HTTP 400. If changing models, verify availability for the `agentic-workflows` integration, update `engine.model`, and recompile before running.
+
 For a personal repository, create a fine-grained personal access token owned by your user account with **Account permissions → Copilot Requests: Read** ([prefilled link](https://github.com/settings/personal-access-tokens/new?name=COPILOT_GITHUB_TOKEN&description=GitHub+Agentic+Workflows+-+Copilot+engine+authentication&user_copilot_requests=read)), then store it:
 
 ```bash
