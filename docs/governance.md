@@ -8,7 +8,7 @@ The submission repository is private. GitHub rejected branch protection with HTT
 
 The approval gates below describe the intended deployment, not enforced controls in this demo. CODEOWNERS is present, but it does not enforce approval without branch protection. Azure credentials and deployment variables are not configured; no Azure deployment or automatic merge is authorized. Environment approval has not been configured or demonstrated.
 
-Copilot authentication is deferred, so no agentic run, generated Issue or draft pull request has been verified yet. The service-change schedule remains off, and `.github/workflows/aw.json` disables generated maintenance. Do not claim end-to-end approval enforcement until the repository plan and review gates have been configured and tested.
+The owner registered the Copilot secret on October 6. The first run passed secret validation and deterministic preparation but failed on an unavailable model; the framework opened a failure Issue, not an impact finding. A retry with owner-selected `gpt-5.4` is in progress, and impact Issues and draft pull requests have not yet been verified. The service-change schedule remains off, and `.github/workflows/aw.json` disables generated maintenance. Do not claim end-to-end approval enforcement until the repository plan and review gates have been configured and tested.
 
 ## Human decision points
 
