@@ -1,0 +1,122 @@
+{
+  "description": "SYNTHETIC sample inventory in the format produced by scripts/sanitize_azure_inventory.py. It does not describe any real subscription. Replace it with a sanitized export of your own environment (see docs/setup.md).",
+  "sample": true,
+  "scope": "sample subscription (synthetic)",
+  "captured_at": "2026-10-01T00:00:00Z",
+  "resource_count": 12,
+  "resources": [
+    {
+      "name": "sites-01",
+      "resource_group": "rg-01",
+      "type": "microsoft.web/sites",
+      "kind": "functionapp",
+      "location": "japaneast",
+      "sku": null,
+      "properties": { "siteConfig.powerShellVersion": "7.4", "siteConfig.minTlsVersion": "1.2", "reserved": false, "httpsOnly": true },
+      "iac": "infra/main.bicep (resource functionApp)"
+    },
+    {
+      "name": "serverfarms-01",
+      "resource_group": "rg-01",
+      "type": "microsoft.web/serverfarms",
+      "kind": "functionapp",
+      "location": "japaneast",
+      "sku": { "name": "Y1", "tier": "Dynamic" },
+      "properties": { "reserved": false },
+      "iac": "infra/main.bicep (resource hostingPlan)"
+    },
+    {
+      "name": "storageaccounts-01",
+      "resource_group": "rg-01",
+      "type": "microsoft.storage/storageaccounts",
+      "kind": "StorageV2",
+      "location": "japaneast",
+      "sku": { "name": "Standard_LRS", "tier": "Standard" },
+      "properties": { "minimumTlsVersion": "TLS1_2", "allowBlobPublicAccess": false, "supportsHttpsTrafficOnly": true, "accessTier": "Hot" },
+      "iac": "infra/main.bicep (resource storage)"
+    },
+    {
+      "name": "components-01",
+      "resource_group": "rg-01",
+      "type": "microsoft.insights/components",
+      "kind": "web",
+      "location": "japaneast",
+      "sku": null,
+      "properties": { "IngestionMode": "LogAnalytics", "Flow_Type": "Bluefield" },
+      "iac": "infra/main.bicep (resource appInsights)"
+    },
+    {
+      "name": "workspaces-01",
+      "resource_group": "rg-01",
+      "type": "microsoft.operationalinsights/workspaces",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "PerGB2018" },
+      "properties": {},
+      "iac": "infra/main.bicep (resource logAnalytics)"
+    },
+    {
+      "name": "virtualmachines-01",
+      "resource_group": "rg-02",
+      "type": "microsoft.compute/virtualmachines",
+      "kind": null,
+      "location": "japaneast",
+      "sku": null,
+      "properties": { "hardwareProfile.vmSize": "Standard_D2s_v5", "storageProfile.osDisk.osType": "Windows", "storageProfile.osDisk.managedDisk.storageAccountType": "Standard_LRS", "storageProfile.imageReference.offer": "WindowsServer", "storageProfile.imageReference.sku": "2022-datacenter-azure-edition" }
+    },
+    {
+      "name": "disks-01",
+      "resource_group": "rg-02",
+      "type": "microsoft.compute/disks",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "Standard_LRS", "tier": "Standard" },
+      "properties": { "diskSizeGB": 127, "osType": "Windows", "diskState": "Attached" }
+    },
+    {
+      "name": "disks-02",
+      "resource_group": "rg-02",
+      "type": "microsoft.compute/disks",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "Standard_LRS", "tier": "Standard" },
+      "properties": { "diskSizeGB": 1024, "diskState": "Attached" }
+    },
+    {
+      "name": "disks-03",
+      "resource_group": "rg-03",
+      "type": "microsoft.compute/disks",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "Premium_LRS", "tier": "Premium" },
+      "properties": { "diskSizeGB": 256, "osType": "Linux", "diskState": "Unattached" }
+    },
+    {
+      "name": "vaults-01",
+      "resource_group": "rg-03",
+      "type": "microsoft.keyvault/vaults",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "standard", "family": "A" },
+      "properties": { "enableRbacAuthorization": true, "enableSoftDelete": true, "enablePurgeProtection": true }
+    },
+    {
+      "name": "userassignedidentities-01",
+      "resource_group": "rg-03",
+      "type": "microsoft.managedidentity/userassignedidentities",
+      "kind": null,
+      "location": "japaneast",
+      "sku": null,
+      "properties": {}
+    },
+    {
+      "name": "accounts-01",
+      "resource_group": "rg-03",
+      "type": "microsoft.purview/accounts",
+      "kind": null,
+      "location": "japaneast",
+      "sku": { "name": "Standard", "capacity": 1 },
+      "properties": {}
+    }
+  ]
+}

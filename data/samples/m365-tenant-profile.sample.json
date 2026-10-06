@@ -1,0 +1,10 @@
+{
+  "description": "SYNTHETIC Microsoft 365 tenant profile used to evaluate Message Center notices. Not a real tenant. Record only settings you actually read, with where they came from; missing settings must lead to 'needs investigation', not 'not affected'.",
+  "sample": true,
+  "captured_at": "2026-10-01T00:00:00Z",
+  "services_in_use": ["Exchange Online", "Microsoft Teams", "SharePoint Online", "OneDrive for Business", "Microsoft Entra"],
+  "settings": {
+    "entra.authenticationMethods.sms": { "value": "enabled for all users", "source": "sample (Graph authenticationMethodsPolicy in a real tenant)" },
+    "teams.meetingRecap": { "value": "default", "source": "sample" }
+  }
+}

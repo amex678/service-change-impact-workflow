@@ -1,0 +1,53 @@
+{
+  "description": "Phrases used only to rank candidates: configuration facts from the inventory are matched against notice text so notices that mention the configuration actually in use are evaluated first. A hint is never a verdict; the agent must confirm every condition.",
+  "property_aliases": {
+    "powerShellVersion": ["powershell"],
+    "pythonVersion": ["python"],
+    "nodeVersion": ["node"],
+    "javaVersion": ["java"],
+    "netFrameworkVersion": [".net"],
+    "linuxFxVersion": [],
+    "functionAppConfig.runtime.name": [],
+    "minTlsVersion": ["tls"],
+    "minimumTlsVersion": ["tls"],
+    "minimalTlsVersion": ["tls"],
+    "kubernetesVersion": ["kubernetes"],
+    "currentKubernetesVersion": ["kubernetes"],
+    "osType": ["os disk", "operating system disk"],
+    "redisVersion": ["redis"],
+    "platformVersion": ["stv"]
+  },
+  "value_aliases": {
+    "microsoft.compute/disks": {
+      "sku.name": {
+        "Standard_LRS": ["standard hdd"],
+        "Standard_ZRS": ["standard hdd"],
+        "StandardSSD_LRS": ["standard ssd"],
+        "StandardSSD_ZRS": ["standard ssd"],
+        "Premium_LRS": ["premium ssd"],
+        "Premium_ZRS": ["premium ssd"],
+        "PremiumV2_LRS": ["premium ssd v2"],
+        "UltraSSD_LRS": ["ultra disk"]
+      }
+    },
+    "microsoft.compute/virtualmachines": {
+      "storageProfile.osDisk.managedDisk.storageAccountType": {
+        "Standard_LRS": ["standard hdd"],
+        "StandardSSD_LRS": ["standard ssd"],
+        "Premium_LRS": ["premium ssd"]
+      }
+    },
+    "microsoft.insights/components": {
+      "IngestionMode": {
+        "ApplicationInsights": ["classic application insights"],
+        "LogAnalytics": ["workspace-based"]
+      }
+    },
+    "microsoft.storage/storageaccounts": {
+      "kind": {
+        "Storage": ["general purpose v1", "gpv1"],
+        "BlobStorage": ["legacy blob storage"]
+      }
+    }
+  }
+}

@@ -1,0 +1,155 @@
+---
+description: >-
+  Match Azure Updates and Microsoft 365 Message Center notices against the
+  organization's inventory, then open evidence-based Issues and, when an Azure
+  change can be expressed in infra/, a draft pull request for human approval.
+  Goal: shorten the time from a Microsoft service-change notice to a reviewed,
+  evidence-backed response, without applying any change automatically.
+labels: ["service-change", "azure", "microsoft-365", "governance"]
+
+on:
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: "Days of recently modified Azure Updates to include (retirements are always included)"
+        required: false
+        default: "14"
+      include_m365:
+        description: "Include Microsoft 365 Message Center notices from data/ (synthetic sample by default)"
+        type: boolean
+        required: false
+        default: true
+  # Enable only after reviewed manual runs (docs/setup.md, step 6):
+  # schedule: daily
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+engine: copilot
+timeout-minutes: 30
+
+network:
+  allowed:
+    - defaults
+    - "www.microsoft.com"
+    - "azure.microsoft.com"
+    - "learn.microsoft.com"
+
+tools:
+  github:
+    toolsets: [default]
+  edit:
+  web-fetch:
+  bash: ["cat", "head", "tail", "grep", "jq", "ls", "wc"]
+
+mcp-servers:
+  microsoft-release-communications:
+    url: "https://www.microsoft.com/releasecommunications/mcp"
+    allowed: ["get_azure_update_by_id", "get_recent_azure_updates"]
+
+steps:
+  - name: Fetch Azure Updates (public, read-only)
+    env:
+      LOOKBACK_DAYS: ${{ github.event.inputs.lookback_days }}
+    run: |
+      mkdir -p run
+      python3 scripts/fetch_azure_updates.py --lookback-days "${LOOKBACK_DAYS:-14}" \
+        --include-active-retirements --output run/azure-updates.json
+  - name: List Issues that already track notices
+    env:
+      GH_TOKEN: ${{ github.token }}
+    run: |
+      gh issue list --label service-change --state all --limit 500 --json number,title,state \
+        > run/existing-issues.json || echo '[]' > run/existing-issues.json
+  - name: Pre-match notices against the inventory (deterministic)
+    env:
+      INCLUDE_M365: ${{ github.event.inputs.include_m365 }}
+      # A noop written here lets the harness skip the AI run when nothing needs evaluation.
+      GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
+    run: |
+      pick() { if [ -f "data/inventory/$1" ]; then echo "data/inventory/$1"; else echo "data/samples/$2"; fi; }
+      python3 scripts/prepare_candidates.py \
+        --azure-updates run/azure-updates.json \
+        --azure-inventory "$(pick azure-inventory.json azure-inventory.sample.json)" \
+        --m365-notices "$(pick m365-message-center.json m365-message-center.sample.json)" \
+        --m365-profile "$(pick m365-tenant-profile.json m365-tenant-profile.sample.json)" \
+        --include-m365 "${INCLUDE_M365:-true}" \
+        --existing-issues run/existing-issues.json \
+        --output run/candidates.json \
+        --summary "$GITHUB_STEP_SUMMARY" \
+        --noop-file "$GH_AW_SAFE_OUTPUTS"
+
+safe-outputs:
+  allowed-domains: [default-safe-outputs, "azure.microsoft.com", "learn.microsoft.com", "www.microsoft.com"]
+  create-issue:
+    title-prefix: "[service-change] "
+    labels: [service-change]
+    max: 6
+    group: true
+    deduplicate-by-title: true
+    expires: false
+  create-pull-request:
+    title-prefix: "[service-change] "
+    labels: [service-change, needs-human-approval]
+    draft: true
+    max: 1
+  upload-artifact:
+    max-uploads: 1
+    retention-days: 30
+    allowed-paths: ["run/**"]
+---
+
+# Service-change impact analysis
+
+You help an operations team decide which Microsoft service changes need action in **their** environment. You propose; people decide. Nothing you do may change Azure, Microsoft 365, or the default branch directly.
+
+## Inputs prepared for you
+
+Deterministic steps have already run. Read these files first:
+
+- `run/candidates.json`: notices pre-matched to the inventory. Each entry in `candidates` has the notice (`notice`), why it was ranked (`signal`, `evidence_hints`), and the matching resources (`matched_resources`, Azure) or the tenant settings (`tenant_settings`, Microsoft 365). `deferred`, `already_tracked`, `counts`, `coverage` and `warnings` describe everything you were **not** asked to evaluate.
+- `run/azure-updates.json`: every Azure Updates notice that was fetched, with the fetch completeness.
+- `templates/impact-report.md`: the report format.
+- `infra/`: the Infrastructure as Code that this repository controls.
+
+Evidence hints only explain the ranking. They are never proof: confirm every condition yourself.
+
+## Verdicts
+
+Give each candidate exactly one verdict:
+
+- **Impacted**: the notice's conditions match configuration that the inventory confirms. Cite the notice text and the matching values.
+- **Not impacted**: the relevant configuration was captured and it does not meet the notice's conditions. Cite the values that rule it out.
+- **Needs investigation**: a candidate exists but a deciding fact is missing (for example a runtime version, a feature flag, or usage that the inventory does not capture). Say exactly what to check and where.
+- **Cannot evaluate**: inputs are missing or incomplete (fetch errors, an incomplete fetch, a notice you could not read). Never turn this into "not impacted".
+
+Rules:
+
+1. Separate the notice's publication or update date from the date the change takes effect. Treat a deadline as confirmed only when the notice states it.
+2. A resource type or product match alone is not impact. A notice that only says "review your usage" is at most "needs investigation" unless the inventory settles it.
+3. For more detail, use the notice `links`, `web-fetch` on learn.microsoft.com, or the `microsoft-release-communications` tools (`get_azure_update_by_id`). Do not guess costs, usage or billing impact.
+4. Report `deferred` and `already_tracked` items as "not evaluated in this run" with their reason. Never describe them as not impacted.
+5. Respect the data boundary: refer to resources only by the names in the inventory (they are pseudonyms), and never output subscription, tenant or resource identifiers. For Microsoft 365, quote at most one short sentence from a notice; do not paste notice bodies.
+6. If `inputs.azure_inventory.sample` or `inputs.m365.sample` is true, say clearly in every output that the environment is a synthetic sample.
+
+## What to produce
+
+1. **Report.** Write `run/impact-report.md` following `templates/impact-report.md`: scope and completeness, one row per candidate with its verdict and evidence, the "not evaluated" list, coverage gaps (`coverage.unmapped_types`), and warnings. Then call `upload_artifact` with `path: run/impact-report.md`.
+
+2. **Issues.** Create one Issue per candidate whose verdict is **Impacted** or **Needs investigation**, highest urgency first. Use this exact title, so later runs can recognize it:
+   - Azure: `Azure <notice id>: <notice title>`
+   - Microsoft 365: `M365 <message id>: <message title>`
+
+   Issue body sections: **Verdict**, **Why** (notice conditions next to the matching configuration), **Affected resources or settings**, **Deadline** (as stated by the notice), **Recommended next step**, **What a person must decide** (a short checklist), **Confidence and gaps**, **Source** (notice URL). For Microsoft 365, the recommended step is an admin action to review. Never propose a configuration change as code.
+
+3. **Draft pull request (Azure only, at most one).** When an **Impacted** Azure notice maps to a resource declared in `infra/` and the fix is a small, well-defined change (for example a runtime version bump the notice recommends):
+   - Edit only files under `infra/`, keeping the change minimal.
+   - Title it `Azure <notice id>: <what changes>`.
+   - In the body, show the change as before → after, why it resolves the notice, the risks, how a reviewer should validate it (for example `az bicep build` and a what-if on a verification resource group), and how to roll back. State that it must be deployed only after human approval.
+   - If the fix needs a decision you cannot make (such as a new SKU with cost impact, or data migration), do not open a pull request; explain the options in the Issue instead.
+
+4. **Nothing to do.** If no candidate is Impacted or Needs investigation, still write and upload the report, then call `noop` with a one-line summary. If you create nothing at all, you MUST call `noop`.
+
+Write all outputs in English, concisely, for an operations reviewer.

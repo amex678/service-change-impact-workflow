@@ -1,0 +1,25 @@
+{
+  "description": "Properties kept by scripts/sanitize_azure_inventory.py, per resource type. Paths are looked up under 'properties' first, then at the top level (Azure CLI flattens some objects). Use '[]' to collect a value from every array element. Everything else, including ids, names, tags and resource groups, is dropped or pseudonymized.",
+  "common": [],
+  "types": {
+    "microsoft.compute/disks": ["diskSizeGB", "osType", "diskState", "burstingEnabled", "tier"],
+    "microsoft.compute/virtualmachines": ["hardwareProfile.vmSize", "storageProfile.osDisk.osType", "storageProfile.osDisk.managedDisk.storageAccountType", "storageProfile.imageReference.offer", "storageProfile.imageReference.sku"],
+    "microsoft.compute/virtualmachinescalesets": ["virtualMachineProfile.storageProfile.imageReference.offer", "virtualMachineProfile.storageProfile.imageReference.sku", "orchestrationMode", "upgradePolicy.mode"],
+    "microsoft.web/sites": ["siteConfig.powerShellVersion", "siteConfig.linuxFxVersion", "siteConfig.netFrameworkVersion", "siteConfig.javaVersion", "siteConfig.pythonVersion", "siteConfig.nodeVersion", "siteConfig.minTlsVersion", "siteConfig.ftpsState", "reserved", "httpsOnly", "functionAppConfig.runtime.name", "functionAppConfig.runtime.version"],
+    "microsoft.web/serverfarms": ["reserved", "zoneRedundant"],
+    "microsoft.containerservice/managedclusters": ["kubernetesVersion", "currentKubernetesVersion", "networkProfile.networkPlugin", "networkProfile.networkPolicy", "agentPoolProfiles[].osSKU", "agentPoolProfiles[].vmSize", "agentPoolProfiles[].orchestratorVersion"],
+    "microsoft.storage/storageaccounts": ["minimumTlsVersion", "allowBlobPublicAccess", "supportsHttpsTrafficOnly", "accessTier", "isHnsEnabled"],
+    "microsoft.sql/servers": ["version", "minimalTlsVersion", "publicNetworkAccess"],
+    "microsoft.dbforpostgresql/flexibleservers": ["version", "storage.storageSizeGB", "highAvailability.mode"],
+    "microsoft.dbformysql/flexibleservers": ["version", "storage.storageSizeGB", "highAvailability.mode"],
+    "microsoft.documentdb/databaseaccounts": ["capabilities[].name", "apiProperties.serverVersion", "minimalTlsVersion"],
+    "microsoft.cache/redis": ["redisVersion", "minimumTlsVersion"],
+    "microsoft.app/containerapps": ["workloadProfileName", "configuration.ingress.transport"],
+    "microsoft.apimanagement/service": ["platformVersion", "virtualNetworkType"],
+    "microsoft.network/applicationgateways": ["sku.tier", "sslPolicy.policyName"],
+    "microsoft.network/publicipaddresses": ["publicIPAllocationMethod", "publicIPAddressVersion"],
+    "microsoft.keyvault/vaults": ["enableRbacAuthorization", "enableSoftDelete", "enablePurgeProtection"],
+    "microsoft.insights/components": ["IngestionMode", "Flow_Type"],
+    "microsoft.automation/automationaccounts": ["sku.name"]
+  }
+}

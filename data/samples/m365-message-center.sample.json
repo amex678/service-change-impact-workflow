@@ -1,0 +1,59 @@
+{
+  "description": "SYNTHETIC Microsoft 365 Message Center-style notices for demos and tests. Fictional content: these are NOT Microsoft announcements. Field names follow Microsoft Graph serviceUpdateMessage so a real, sanitized export can replace this file.",
+  "sample": true,
+  "source": "synthetic",
+  "messages": [
+    {
+      "id": "MC-SAMPLE-001",
+      "title": "[SAMPLE] Authentication methods: SMS sign-in will require a policy update",
+      "services": ["Microsoft Entra"],
+      "category": "planForChange",
+      "severity": "high",
+      "isMajorChange": true,
+      "startDateTime": "2026-09-15T00:00:00Z",
+      "lastModifiedDateTime": "2026-09-25T00:00:00Z",
+      "actionRequiredByDateTime": "2026-12-01T00:00:00Z",
+      "tags": ["Admin impact", "User impact"],
+      "body": "Fictional sample. Tenants where SMS is enabled as a sign-in method must move users to another method before the action-required date. Tenants where SMS sign-in is disabled are not affected."
+    },
+    {
+      "id": "MC-SAMPLE-002",
+      "title": "[SAMPLE] Exchange Online: a legacy mailbox access protocol will be turned off",
+      "services": ["Exchange Online"],
+      "category": "planForChange",
+      "severity": "normal",
+      "isMajorChange": false,
+      "startDateTime": "2026-09-20T00:00:00Z",
+      "lastModifiedDateTime": "2026-09-28T00:00:00Z",
+      "actionRequiredByDateTime": null,
+      "tags": ["Admin impact"],
+      "body": "Fictional sample. Mailboxes that still use the legacy protocol need a modern client. The tenant profile must show the protocol usage to evaluate impact."
+    },
+    {
+      "id": "MC-SAMPLE-003",
+      "title": "[SAMPLE] Microsoft Teams: updated layout for meeting recap",
+      "services": ["Microsoft Teams"],
+      "category": "stayInformed",
+      "severity": "normal",
+      "isMajorChange": false,
+      "startDateTime": "2026-09-22T00:00:00Z",
+      "lastModifiedDateTime": "2026-09-22T00:00:00Z",
+      "actionRequiredByDateTime": null,
+      "tags": ["User impact"],
+      "body": "Fictional sample. Informational update with no admin action."
+    },
+    {
+      "id": "MC-SAMPLE-004",
+      "title": "[SAMPLE] Microsoft Viva: new analytics dashboard",
+      "services": ["Microsoft Viva"],
+      "category": "stayInformed",
+      "severity": "normal",
+      "isMajorChange": false,
+      "startDateTime": "2026-09-23T00:00:00Z",
+      "lastModifiedDateTime": "2026-09-23T00:00:00Z",
+      "actionRequiredByDateTime": null,
+      "tags": ["Feature update"],
+      "body": "Fictional sample for a service the sample tenant does not use."
+    }
+  ]
+}

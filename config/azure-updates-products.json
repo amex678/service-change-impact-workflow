@@ -1,0 +1,584 @@
+{
+  "description": "Distinct product names observed in Azure Updates (public Release Communications API), used to validate config/product-map.json.",
+  "source": "https://www.microsoft.com/releasecommunications/api/v2/azure",
+  "window": "modified >= 2024-10-01",
+  "snapshot_date": "2026-10-01",
+  "products": [
+    {
+      "name": "Azure Kubernetes Service (AKS)",
+      "notices": 202
+    },
+    {
+      "name": "Microsoft Foundry",
+      "notices": 122
+    },
+    {
+      "name": "Azure Database for PostgreSQL",
+      "notices": 118
+    },
+    {
+      "name": "Azure Cosmos DB",
+      "notices": 100
+    },
+    {
+      "name": "Azure Monitor",
+      "notices": 89
+    },
+    {
+      "name": "Azure SQL Database",
+      "notices": 82
+    },
+    {
+      "name": "Azure Functions",
+      "notices": 75
+    },
+    {
+      "name": "Virtual Machines",
+      "notices": 62
+    },
+    {
+      "name": "Azure NetApp Files",
+      "notices": 47
+    },
+    {
+      "name": "API Management",
+      "notices": 43
+    },
+    {
+      "name": "Azure Databricks",
+      "notices": 41
+    },
+    {
+      "name": "Azure Container Apps",
+      "notices": 40
+    },
+    {
+      "name": "Application Gateway",
+      "notices": 38
+    },
+    {
+      "name": "Logic Apps",
+      "notices": 36
+    },
+    {
+      "name": "App Service",
+      "notices": 33
+    },
+    {
+      "name": "Azure Disk Storage",
+      "notices": 32
+    },
+    {
+      "name": "Azure Blob Storage",
+      "notices": 32
+    },
+    {
+      "name": "Azure Front Door",
+      "notices": 30
+    },
+    {
+      "name": "Azure Database for MySQL",
+      "notices": 27
+    },
+    {
+      "name": "Azure Backup",
+      "notices": 26
+    },
+    {
+      "name": "Azure Firewall",
+      "notices": 24
+    },
+    {
+      "name": "Azure SQL Managed Instance",
+      "notices": 24
+    },
+    {
+      "name": "Azure Files",
+      "notices": 24
+    },
+    {
+      "name": "Web Application Firewall",
+      "notices": 20
+    },
+    {
+      "name": "Azure Site Recovery",
+      "notices": 18
+    },
+    {
+      "name": "Azure Red Hat OpenShift",
+      "notices": 17
+    },
+    {
+      "name": "Azure Virtual Network Manager",
+      "notices": 17
+    },
+    {
+      "name": "Azure Kubernetes Fleet Manager",
+      "notices": 17
+    },
+    {
+      "name": "Virtual Machine Scale Sets",
+      "notices": 17
+    },
+    {
+      "name": "Azure ExpressRoute",
+      "notices": 16
+    },
+    {
+      "name": "Azure Private Link",
+      "notices": 16
+    },
+    {
+      "name": "Virtual Network",
+      "notices": 14
+    },
+    {
+      "name": "Microsoft Fabric",
+      "notices": 14
+    },
+    {
+      "name": "Azure Storage Mover",
+      "notices": 12
+    },
+    {
+      "name": "Azure Load Testing",
+      "notices": 12
+    },
+    {
+      "name": "Azure Migrate",
+      "notices": 12
+    },
+    {
+      "name": "Azure DocumentDB",
+      "notices": 12
+    },
+    {
+      "name": "VPN Gateway",
+      "notices": 11
+    },
+    {
+      "name": "Automation",
+      "notices": 11
+    },
+    {
+      "name": "Storage Accounts",
+      "notices": 11
+    },
+    {
+      "name": "Azure Arc",
+      "notices": 11
+    },
+    {
+      "name": "Azure Elastic SAN",
+      "notices": 10
+    },
+    {
+      "name": "Azure Copilot",
+      "notices": 10
+    },
+    {
+      "name": "Azure DNS",
+      "notices": 9
+    },
+    {
+      "name": "Azure Bastion",
+      "notices": 9
+    },
+    {
+      "name": "Azure Machine Learning",
+      "notices": 9
+    },
+    {
+      "name": "Microsoft Defender for Cloud",
+      "notices": 9
+    },
+    {
+      "name": "Network Watcher",
+      "notices": 9
+    },
+    {
+      "name": "Azure Sphere",
+      "notices": 8
+    },
+    {
+      "name": "Azure Chaos Studio",
+      "notices": 8
+    },
+    {
+      "name": "Batch",
+      "notices": 8
+    },
+    {
+      "name": "Azure VMware Solution",
+      "notices": 7
+    },
+    {
+      "name": "Linux Virtual Machines",
+      "notices": 7
+    },
+    {
+      "name": "Azure Data Lake Storage",
+      "notices": 7
+    },
+    {
+      "name": "Event Grid",
+      "notices": 7
+    },
+    {
+      "name": "Azure Data Box",
+      "notices": 7
+    },
+    {
+      "name": "Azure confidential ledger",
+      "notices": 7
+    },
+    {
+      "name": "SQL Server on Azure Virtual Machines",
+      "notices": 6
+    },
+    {
+      "name": "Load Balancer",
+      "notices": 6
+    },
+    {
+      "name": "Azure NAT Gateway",
+      "notices": 6
+    },
+    {
+      "name": "Azure HorizonDB",
+      "notices": 6
+    },
+    {
+      "name": "Azure Data Explorer",
+      "notices": 6
+    },
+    {
+      "name": "Azure Container Storage",
+      "notices": 6
+    },
+    {
+      "name": "Azure Resource Manager",
+      "notices": 5
+    },
+    {
+      "name": "Azure Container Registry",
+      "notices": 5
+    },
+    {
+      "name": "Azure Cache for Redis",
+      "notices": 5
+    },
+    {
+      "name": "Azure Synapse Analytics",
+      "notices": 5
+    },
+    {
+      "name": "Azure Managed Lustre",
+      "notices": 5
+    },
+    {
+      "name": "Virtual WAN",
+      "notices": 5
+    },
+    {
+      "name": "Visual Studio",
+      "notices": 4
+    },
+    {
+      "name": "Azure Database Migration Service",
+      "notices": 4
+    },
+    {
+      "name": "Azure DDoS Protection",
+      "notices": 4
+    },
+    {
+      "name": "Log Analytics",
+      "notices": 4
+    },
+    {
+      "name": "Azure Compute Fleet",
+      "notices": 4
+    },
+    {
+      "name": "Microsoft Dev Box",
+      "notices": 4
+    },
+    {
+      "name": "Key Vault",
+      "notices": 4
+    },
+    {
+      "name": "Application Insights",
+      "notices": 4
+    },
+    {
+      "name": "Visual Studio Code",
+      "notices": 4
+    },
+    {
+      "name": "Service Bus",
+      "notices": 4
+    },
+    {
+      "name": "Azure DevTest Labs",
+      "notices": 4
+    },
+    {
+      "name": "Azure Firewall Manager",
+      "notices": 4
+    },
+    {
+      "name": "Traffic Manager",
+      "notices": 4
+    },
+    {
+      "name": "Azure AI Language",
+      "notices": 4
+    },
+    {
+      "name": "Cloud Services",
+      "notices": 4
+    },
+    {
+      "name": "Azure Container Instances",
+      "notices": 3
+    },
+    {
+      "name": "App Configuration",
+      "notices": 3
+    },
+    {
+      "name": "Microsoft Copilot for Security",
+      "notices": 3
+    },
+    {
+      "name": "Microsoft Cost Management",
+      "notices": 3
+    },
+    {
+      "name": "Microsoft Sentinel",
+      "notices": 3
+    },
+    {
+      "name": "SDKs",
+      "notices": 3
+    },
+    {
+      "name": "Archive Storage",
+      "notices": 3
+    },
+    {
+      "name": "Event Hubs",
+      "notices": 3
+    },
+    {
+      "name": "Azure Linux",
+      "notices": 3
+    },
+    {
+      "name": "Windows Virtual Machines",
+      "notices": 3
+    },
+    {
+      "name": "Azure Storage Actions",
+      "notices": 3
+    },
+    {
+      "name": "Azure SQL",
+      "notices": 3
+    },
+    {
+      "name": "Content Delivery Network",
+      "notices": 2
+    },
+    {
+      "name": "Language Understanding (LUIS)",
+      "notices": 2
+    },
+    {
+      "name": "Azure Policy",
+      "notices": 2
+    },
+    {
+      "name": "Table Storage",
+      "notices": 2
+    },
+    {
+      "name": "Azure Modular Datacenter",
+      "notices": 2
+    },
+    {
+      "name": "Queue Storage",
+      "notices": 2
+    },
+    {
+      "name": "Azure Communication Services",
+      "notices": 2
+    },
+    {
+      "name": "Azure HDInsight on Azure Kubernetes Service (AKS)",
+      "notices": 2
+    },
+    {
+      "name": "Azure Service Fabric",
+      "notices": 2
+    },
+    {
+      "name": "Microsoft Entra Domain Services",
+      "notices": 2
+    },
+    {
+      "name": "Microsoft Entra ID (formerly Azure AD)",
+      "notices": 2
+    },
+    {
+      "name": "Azure VM Image Builder",
+      "notices": 2
+    },
+    {
+      "name": "Azure Spot Virtual Machines",
+      "notices": 2
+    },
+    {
+      "name": "Power BI Embedded",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Foundry",
+      "notices": 1
+    },
+    {
+      "name": "Azure DevOps",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Custom Vision",
+      "notices": 1
+    },
+    {
+      "name": "Static Web Apps",
+      "notices": 1
+    },
+    {
+      "name": "Azure Deployment Environments",
+      "notices": 1
+    },
+    {
+      "name": "Azure Advisor",
+      "notices": 1
+    },
+    {
+      "name": "Azure Maps",
+      "notices": 1
+    },
+    {
+      "name": "Azure Managed Redis",
+      "notices": 1
+    },
+    {
+      "name": "Azure Managed Instance for Apache Cassandra",
+      "notices": 1
+    },
+    {
+      "name": "Azure Managed Grafana",
+      "notices": 1
+    },
+    {
+      "name": "Azure Health Data Services",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Document Intelligence",
+      "notices": 1
+    },
+    {
+      "name": "Microsoft Playwright Testing",
+      "notices": 1
+    },
+    {
+      "name": "Azure Route Server",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Search",
+      "notices": 1
+    },
+    {
+      "name": "Azure Stack Hub",
+      "notices": 1
+    },
+    {
+      "name": "Azure SQL Edge",
+      "notices": 1
+    },
+    {
+      "name": "Bing Search",
+      "notices": 1
+    },
+    {
+      "name": "Azure Data Factory",
+      "notices": 1
+    },
+    {
+      "name": "Azure IoT Central",
+      "notices": 1
+    },
+    {
+      "name": "Conversational language understanding",
+      "notices": 1
+    },
+    {
+      "name": "GitHub Advanced Security for Azure DevOps",
+      "notices": 1
+    },
+    {
+      "name": "GitHub Enterprise",
+      "notices": 1
+    },
+    {
+      "name": "HDInsight",
+      "notices": 1
+    },
+    {
+      "name": "Azure Spring Apps",
+      "notices": 1
+    },
+    {
+      "name": "Azure Blueprints",
+      "notices": 1
+    },
+    {
+      "name": "Azure SignalR Service",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Speech",
+      "notices": 1
+    },
+    {
+      "name": "Managed Prometheus",
+      "notices": 1
+    },
+    {
+      "name": "Azure Service Health",
+      "notices": 1
+    },
+    {
+      "name": "Azure AI Services",
+      "notices": 1
+    },
+    {
+      "name": "Azure Stream Analytics",
+      "notices": 1
+    },
+    {
+      "name": "Azure Dedicated HSM",
+      "notices": 1
+    },
+    {
+      "name": "Azure Virtual Desktop",
+      "notices": 1
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+# Human-approved delivery of infra/ changes to a verification resource group.
+#
+# Gate 1: the pull request must be reviewed and approved (branch protection + CODEOWNERS).
+# Gate 2: the deploy job uses the "azure-verification" environment; add required
+#         reviewers to it so a person approves again right before deployment.
+# Production should be a separate environment and subscription, promoted only after
+# the verification deployment has been checked.
+#
+# Azure access uses OpenID Connect (no stored credentials). Until the repository
+# variables below are set, only the offline Bicep build runs.
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_VERIFY_RESOURCE_GROUP
+name: infra-deploy
+
+on:
+  pull_request:
+    paths: ["infra/**"]
+  push:
+    branches: [main]
+    paths: ["infra/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Build Bicep
+        run: az bicep build --file infra/main.bicep --stdout > /dev/null
+      - name: Azure login (OIDC, read-only use)
+        if: vars.AZURE_CLIENT_ID != ''
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: What-if against the verification resource group
+        if: vars.AZURE_CLIENT_ID != ''
+        env:
+          RESOURCE_GROUP: ${{ vars.AZURE_VERIFY_RESOURCE_GROUP }}
+        run: |
+          az deployment group what-if --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/main.bicep --result-format ResourceIdOnly >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-verification:
+    if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: azure-verification
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Azure login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Deploy to the verification resource group
+        env:
+          RESOURCE_GROUP: ${{ vars.AZURE_VERIFY_RESOURCE_GROUP }}
+        run: |
+          az deployment group create --resource-group "$RESOURCE_GROUP" \
+            --name "service-change-${GITHUB_SHA::7}" --template-file infra/main.bicep \
+            --query "properties.outputs" -o json >> "$GITHUB_STEP_SUMMARY"

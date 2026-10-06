@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.env*
+*.pem
+*.key
+secrets/
+
+# Runtime output of the workflow and local runs
+run/
+
+# Raw Azure/M365 exports and pseudonym maps: never commit
+data/raw/

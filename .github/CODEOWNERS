@@ -1,0 +1,6 @@
+# Changes to automation, infrastructure and matching rules need an owner's review.
+# Replace with your team before enabling branch protection.
+/.github/                 @amex678
+/infra/                   @amex678
+/config/                  @amex678
+/scripts/                 @amex678
