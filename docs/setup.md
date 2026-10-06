@@ -42,6 +42,8 @@ gh label create needs-human-approval --color FBCA04 --description "A person must
 - Protect `main`: require a pull request, one approval, review from code owners and the `ci` checks.
 - Create the environment **azure-verification** with required reviewers (Settings → Environments). `infra-deploy.yml` waits for this approval before deploying.
 
+For the current private demo, the branch-protection API returned HTTP 403 (a plan upgrade is required), and environment approval is not configured. Keep Azure authentication and deployment variables unset. CODEOWNERS alone is not an approval gate. Continue only with sample analysis and human-reviewed draft outputs; do not merge or deploy automatically. See [current governance status](governance.md#current-demo-deployment-2026-10-06).
+
 ## 4. First run
 
 Actions → **Service-change impact analysis** → Run workflow, or:
@@ -65,6 +67,8 @@ Use `gh aw logs service-change-impact` and `gh aw audit <run-id>` to inspect run
 ## 6. Turn on the schedule
 
 After a few reviewed manual runs, uncomment `schedule: daily` in the workflow Markdown, run `gh aw compile`, and commit. Notices already tracked by an Issue are skipped, so daily runs stay small, and runs with nothing new do not start the AI.
+
+Generated maintenance is separately disabled by `"maintenance": false` in `.github/workflows/aw.json`; recompiling preserves this setting. Leave it disabled during initial manual validation.
 
 ## 7. Use your own Azure inventory
 

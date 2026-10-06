@@ -2,6 +2,14 @@
 
 How the workflow keeps people in control, limits what automation can touch, and avoids overstating impact.
 
+## Current demo deployment (2026-10-06)
+
+The submission repository is private. GitHub rejected branch protection with HTTP 403 because the current account plan does not support it for private repositories. The owner chose to continue with sample-only demo validation, not to make the repository public.
+
+The approval gates below describe the intended deployment, not enforced controls in this demo. CODEOWNERS is present, but it does not enforce approval without branch protection. Azure credentials and deployment variables are not configured; no Azure deployment or automatic merge is authorized. Environment approval has not been configured or demonstrated.
+
+Copilot authentication is deferred, so no agentic run, generated Issue or draft pull request has been verified yet. The service-change schedule remains off, and `.github/workflows/aw.json` disables generated maintenance. Do not claim end-to-end approval enforcement until the repository plan and review gates have been configured and tested.
+
 ## Human decision points
 
 | Decision | Who | Where |
@@ -48,6 +56,7 @@ Threat detection is on by default with safe outputs: the agent output is checked
 - Per-run limits: 10 Azure and 5 Microsoft 365 candidates; the agent job times out after 30 minutes.
 - Scheduled runs stay off until reviewed manual runs succeed. GitHub may delay scheduled runs; the no-op runs Issue shows when the last successful check happened, so a missing check is visible rather than silently treated as all clear.
 - CI runs unit tests, builds the Bicep file and lints every workflow, including the compiled agentic workflow.
+- With gh-aw v0.81.6, the compiled safe-output job uses `concurrency.queue`. actionlint 1.7.12 does not recognize that key. `.github/actionlint.yaml` suppresses only that exact diagnostic in the compiled workflow; all other checks remain enabled. Remove the exception when actionlint supports the key.
 
 ## Threat model (summary)
 

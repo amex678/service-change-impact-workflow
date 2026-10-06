@@ -1,0 +1,5 @@
+paths:
+  .github/workflows/service-change-impact.lock.yml:
+    ignore:
+      # gh-aw v0.81.6 emits concurrency.queue, not yet recognized by actionlint 1.7.12.
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'

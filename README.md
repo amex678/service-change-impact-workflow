@@ -4,6 +4,8 @@ Turn Microsoft service-change notices into evidence-based, human-approved action
 
 > **Status (2026-10-06): prototype, preparing its first GitHub run.** The private submission repository is [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow). All 33 unit tests and workflow compilation passed again locally on October 6. The agentic workflow has not yet run on GitHub Actions, so the verdicts in the demo below are the expected outcome, not a recorded result.
 
+> **Demo boundary:** Copilot authentication is deferred. Branch protection is unavailable on the current private-repository plan (HTTP 403), so approval enforcement is not demonstrated. No automatic merge or Azure deployment is authorized; Azure credentials are not configured. Daily analysis and generated maintenance are disabled. See [current governance status](docs/governance.md#current-demo-deployment-2026-10-06).
+
 ## Why
 
 Azure Updates published 1,822 notices between October 2024 and September 2026, and 195 announced retirements fall in 2026 or later (measured on 2026-10-01 from the public Release Communications API). Microsoft 365 Message Center adds tenant-specific notices. Reading a notice does not tell an operations team whether **their** environment is affected, what the evidence is, or who must act by when. This workflow does that triage continuously and hands every decision to a person.
