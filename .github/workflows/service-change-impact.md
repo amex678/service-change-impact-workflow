@@ -24,11 +24,18 @@ on:
         type: boolean
         required: false
         default: false
+      input_mode:
+        description: "Live public Azure notices, or the labelled frozen synthetic reference demo"
+        type: choice
+        options: [live, reference]
+        required: false
+        default: live
   # Enable only after reviewed manual runs (docs/setup.md, step 6):
   # schedule: daily
 
 permissions:
   contents: read
+  actions: read
   issues: read
   pull-requests: read
 
@@ -60,10 +67,19 @@ steps:
   - name: Fetch Azure Updates (public, read-only)
     env:
       LOOKBACK_DAYS: ${{ github.event.inputs.lookback_days }}
+      INPUT_MODE: ${{ github.event.inputs.input_mode }}
     run: |
       mkdir -p run
-      python3 scripts/fetch_azure_updates.py --lookback-days "${LOOKBACK_DAYS:-14}" \
-        --include-active-retirements --output run/azure-updates.json
+      case "${INPUT_MODE:-live}" in
+        live) python3 scripts/fetch_azure_updates.py --lookback-days "${LOOKBACK_DAYS:-14}" \
+          --include-active-retirements --output run/azure-updates.json ;;
+        reference) cp data/samples/azure-updates.reference.json run/azure-updates.json ;;
+        *) echo "Unknown input mode; refusing to fetch." >&2; exit 1 ;;
+      esac
+  - name: Restore the previous verified assessment revisions
+    env:
+      GH_TOKEN: ${{ github.token }}
+    run: python3 scripts/restore_assessment.py --output run/previous-candidates.json
   - name: List Issues that already track notices
     env:
       GH_TOKEN: ${{ github.token }}
@@ -74,11 +90,18 @@ steps:
     env:
       INCLUDE_M365: ${{ github.event.inputs.include_m365 }}
       REVIEW_TRACKED: ${{ github.event.inputs.review_tracked }}
+      INPUT_MODE: ${{ github.event.inputs.input_mode }}
       REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
       # A noop written here lets the harness skip the AI run when nothing needs evaluation.
       GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
     run: |
       pick() { if [ -f "data/inventory/$1" ]; then echo "data/inventory/$1"; else echo "data/samples/$2"; fi; }
+      if [ "${INPUT_MODE:-live}" = "reference" ] && find data/inventory -maxdepth 1 -name '*.json' | grep -q .; then
+        echo "The frozen reference demo must not mix in environment exports." >&2
+        exit 1
+      fi
+      previous_args=()
+      if [ -f run/previous-candidates.json ]; then previous_args=(--previous-report run/previous-candidates.json); fi
       public_args=()
       case "$REPOSITORY_VISIBILITY" in
         public) public_args=(--public-output) ;;
@@ -93,7 +116,7 @@ steps:
         --include-m365 "${INCLUDE_M365:-true}" \
         --existing-issues run/existing-issues.json \
         --review-tracked "${REVIEW_TRACKED:-false}" \
-        "${public_args[@]}" \
+        "${public_args[@]}" "${previous_args[@]}" \
         --output run/candidates.json \
         --summary "$GITHUB_STEP_SUMMARY" \
         --noop-file "$GH_AW_SAFE_OUTPUTS"
@@ -102,6 +125,7 @@ steps:
       mkdir -p run/report
       mkdir -p "$RUNNER_TEMP/gh-aw/report-publisher/scripts" "$RUNNER_TEMP/gh-aw/report-publisher/templates"
       cp scripts/publish_report.py "$RUNNER_TEMP/gh-aw/report-publisher/scripts/"
+      cp scripts/assessment.py "$RUNNER_TEMP/gh-aw/report-publisher/scripts/"
       cp templates/impact-report.html "$RUNNER_TEMP/gh-aw/report-publisher/templates/"
       cp run/candidates.json "$RUNNER_TEMP/gh-aw/report-publisher/candidates.json"
 
@@ -122,16 +146,17 @@ post-steps:
         --report run/impact-report.md --output-dir run/report \
         --stage-dir "$RUNNER_TEMP/gh-aw/safeoutputs/upload-artifacts/run/report" \
         --run-url "$RUN_URL" "${public_args[@]}"
-  # gh-aw v0.81.6 uploads staging before post-steps; replace it after validation.
-  - name: Upload validated report staging
+      if [ "$(jq '.counts.candidates' "$RUNNER_TEMP/gh-aw/report-publisher/candidates.json")" -eq 0 ]; then
+        echo "Deterministic no-op: report prepared without AI execution." >> "$GITHUB_STEP_SUMMARY"
+      fi
+  - name: Deliver the validated report (including zero-candidate runs)
     uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
     with:
-      name: safe-outputs-upload-artifacts
+      name: report
       path: ${{ runner.temp }}/gh-aw/safeoutputs/upload-artifacts/
-      retention-days: 1
+      retention-days: 30
       if-no-files-found: error
       overwrite: true
-
 jobs:
   verify-report:
     needs: [agent, safe_outputs]
@@ -171,15 +196,18 @@ safe-outputs:
     group: true
     deduplicate-by-title: true
     expires: false
+  add-comment:
+    target: "*"
+    max: 15
+    issues: true
+    pull-requests: false
+    required-labels: [service-change]
+    required-title-prefix: "[service-change] "
   create-pull-request:
     title-prefix: "[service-change] "
     labels: [service-change, needs-human-approval]
     draft: true
     max: 1
-  upload-artifact:
-    max-uploads: 1
-    retention-days: 30
-    allowed-paths: ["run/report", "run/report/**"]
 ---
 
 # Service-change impact analysis
@@ -196,6 +224,7 @@ Deterministic steps have already run. Read these files first:
 - `infra/`: the Infrastructure as Code that this repository controls.
 
 Evidence hints only explain the ranking. They are never proof: confirm every condition yourself.
+`evidence_requirements`, when present, defines the known-revision guard's allowed verdicts and missing deciding facts. Stay within those verdicts; do not invent a configuration capture to bypass a gap. Changing the inventory or reviewing a new notice revision is a separate human-controlled input change.
 
 ## Verdicts
 
@@ -216,20 +245,22 @@ Rules:
 6. If `inputs.azure_inventory.sample` or `inputs.m365.sample` is true, say clearly in every output that the environment is a synthetic sample.
 7. Do not equate an enabled SMS authentication policy with SMS primary sign-in: `includeTargets[].isUsableForSignIn` is a separate deciding fact. A Disk Encryption Set is not evidence that Azure Disk Encryption is enabled.
 8. Scope a Not impacted verdict to captured facts. An application's `minTlsVersion` does not capture the SCM site's TLS setting or client compatibility. A region alone is not an explicit subscription cloud identifier. Missing deciding facts require Needs investigation, not an assumed default.
-9. A candidate with `tracking_issue` is a re-review of an existing finding. Evaluate it in the report and link that Issue, but do not create another Issue or pull request for it.
+9. A candidate with `tracking_issue` is a re-review of an existing finding. Evaluate it in the report, link that Issue and add a bounded re-assessment comment with the current verdict, changed facts, remaining gaps and run link. Do not create another Issue or pull request, overwrite a human review, or close the finding.
 10. Do not label a disk as a data disk just because `osType` is missing. Keep its OS/data role unknown until captured. Reservations require reservation-order evidence: a current VM series can be excluded without proving that the account has no other affected reservations.
 
 ## What to produce
 
 1. **Report.** Write `run/impact-report.md` following `templates/impact-report.md`. Section 2 must contain exactly one six-column row per candidate, with the exact candidate key, matched configuration or explicitly limited scope, deciding evidence, one of the four verdicts and a next step. Section 3 must include a heading with the exact key for every Impacted or Needs investigation row. Use actual newlines, never literal `\n` sequences, and retain the notice's original source URL.
 
-   The trusted post-step validates your rows, replaces scope/counts and coverage lists with the deterministic snapshot, generates HTML and stages all required files. Queue `upload_artifact` with `path: run/report` and do not set a custom artifact name (it must default to `report`); this directory is populated after you finish. Do not upload the draft Markdown directly or execute a report publisher yourself. Required output is Markdown, HTML and the candidate metadata; missing output now fails a separate verification job. Detail headings must begin with `### Azure <id>:` or `### M365 <id>:` without formatting around the key.
+   The trusted post-step validates your rows and the known-revision evidence guards, replaces scope/counts and captured-resource labels from the deterministic snapshot, generates HTML and delivers artifact `report`. Do not request an upload tool or execute a publisher yourself. Missing or invalid output fails publication and `verify-report`. Detail headings must begin with `### Azure <id>:` or `### M365 <id>:` without formatting around the key.
 
 2. **Issues.** Create one Issue per candidate whose verdict is **Impacted** or **Needs investigation**, highest urgency first. Use this exact title, so later runs can recognize it:
    - Azure: `Azure <notice id>: <notice title>`
    - Microsoft 365: `M365 <message id>: <message title>`
 
    Issue body sections: **Verdict**, **Why** (notice conditions next to the matching configuration), **Affected resources or settings**, **Deadline** (as stated by the notice), **Recommended next step**, **What a person must decide** (a short checklist), **Confidence and gaps**, **Source** (notice URL). For Microsoft 365, the recommended step is an admin action to review. Never propose a configuration change as code.
+
+   For candidates with `tracking_issue`, use `add_comment` on that Issue instead, even if the updated verdict is Not impacted; retain the historical finding for human disposition. If no new Issue or comment is required, call `noop` after completing the report; the trusted publisher still delivers it.
 
 3. **Draft pull request (Azure only, at most one).** When an **Impacted** Azure notice maps to a resource declared in `infra/` and the fix is a small, well-defined change (for example a runtime version bump the notice recommends):
    - Edit only files under `infra/`, keeping the change minimal.

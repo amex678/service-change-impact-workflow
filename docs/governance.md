@@ -20,7 +20,7 @@ All 12 selected candidates were reviewed against public source conditions and th
 
 Draft PR 9 has passing PR-linked CI and offline Bicep validation after an owner-origin empty commit. Its deployment job was skipped. Manual CI alone does not configure automatic CI for future bot-created pull requests; the scoped trigger-token option remains documented in setup.
 
-Report publication is deterministic and validates exact candidate coverage. The trusted publisher is copied before the agent runs, so post-steps do not execute agent-modified source. With gh-aw v0.81.6, its built-in staging upload precedes post-steps; the validated staging upload replaces that artifact afterward. `verify-report` fails if Markdown, HTML or candidate metadata was not delivered or does not match validation. An Actions green status without this check is insufficient.
+Report publication is deterministic and validates exact candidate coverage. The publisher and evidence guards are copied before the agent runs, so post-steps do not execute agent-modified source. The follow-up directly uploads the validated report, including complete zero-candidate reports, rather than relying on a model-requested artifact upload. `verify-report` fails if required files are missing or inconsistent. An Actions green status without this check is insufficient.
 
 [Live run 38012531004](https://github.com/amex678/service-change-impact-workflow/actions/runs/38012531004) passed all six jobs and delivered all three report files with 12/12 verdicts. Factual review still corrected a claim that the unclassified `disks-02` was a data disk. Passing delivery/shape checks does not mean all generated statements are correct or approved.
 
@@ -38,6 +38,14 @@ Approval enforcement is not demonstrated merely by changing visibility to public
 
 The agent proposes. It never merges, deploys, or changes Azure or Microsoft 365.
 
+Reassessment state fingerprints notice/configuration/policy and expires after
+30 days without evaluation. Missing state or changing evidence triggers review;
+it is never inferred from an Issue's ID alone. Existing findings receive bounded
+comments, not duplicate Issues or replacement of a human verdict. Known notice
+revisions reject five historical unsupported verdicts, and resource labels are
+derived from the captured inventory. These checks do not prove every sentence
+or replace human approval. See [reproduction and limits](reproduce.md).
+
 ## Permissions and boundaries
 
 | Component | Access |
@@ -46,7 +54,8 @@ The agent proposes. It never merges, deploys, or changes Azure or Microsoft 365.
 | Agent job | `contents: read`, `issues: read`, `pull-requests: read`; network limited by the firewall to default infrastructure, `www.microsoft.com`, `azure.microsoft.com` and `learn.microsoft.com` |
 | MCP server | Microsoft Release Communications, limited to `get_azure_update_by_id` and `get_recent_azure_updates` |
 | Shell | `cat`, `head`, `tail`, `grep`, `jq`, `ls`, `wc` plus compiler defaults; git commands only for preparing a pull request patch |
-| Safe outputs (separate job) | At most 6 Issues (titles de-duplicated across runs), 1 draft pull request (protected files enforced), 1 artifact under `run/` |
+| Safe outputs (separate job) | At most 6 new Issues, 15 reassessment comments on labelled finding Issues, 1 draft pull request; no merge, closure or replacement of human review |
+| Report publisher | Deterministic read/validate/render/upload of required report files, with captured-resource labels and revision state; no AI execution outside the firewall |
 | `infra-deploy.yml` | OIDC to Azure (no stored credentials); deploys only after an approved merge and an environment approval |
 
 Threat detection is on by default with safe outputs: the agent output is checked for prompt injection, secret leaks and malicious patches before the safe-output job applies it. URLs outside the allowed domains are redacted in outputs.
@@ -68,7 +77,7 @@ Threat detection is on by default with safe outputs: the agent output is checked
 
 ## Cost and reliability controls
 
-- Runs with nothing new write a no-op before the engine starts, so no AI credits are used, and the no-op is recorded on the no-op runs Issue.
+- Complete runs with nothing requiring reassessment write a no-op before model inference, publish a visible scope report and retain the unchanged assessment timestamps.
 - Per-run limits: 10 Azure and 5 Microsoft 365 candidates; the agent job times out after 30 minutes.
 - Scheduled runs stay off until reviewed manual runs succeed. GitHub may delay scheduled runs; the no-op runs Issue shows when the last successful check happened, so a missing check is visible rather than silently treated as all clear.
 - CI runs unit tests, builds the Bicep file and lints every workflow, including the compiled agentic workflow.

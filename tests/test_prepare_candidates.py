@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import sys
 import tempfile
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import prepare_candidates as prep  # noqa: E402
+import assessment  # noqa: E402
 
 AS_OF = datetime(2026, 10, 1, tzinfo=timezone.utc)
 PRODUCT_MAP = json.loads((ROOT / "config" / "product-map.json").read_text(encoding="utf-8"))
@@ -33,11 +35,12 @@ STORAGE = {"name": "storageaccounts-01", "type": "microsoft.storage/storageaccou
 class Workspace:
     """Write inputs to a temporary folder and run prepare_candidates.main()."""
 
-    def __init__(self, updates, resources, messages=None, profile=None, issues=None, complete=True):
+    def __init__(self, updates, resources, messages=None, profile=None, issues=None, complete=True, previous=None):
         self.dir = tempfile.TemporaryDirectory()
         base = Path(self.dir.name)
         self.paths = {name: base / f"{name}.json" for name in
-                      ("updates", "inventory", "messages", "profile", "issues", "output")}
+                      ("updates", "inventory", "messages", "profile", "issues", "output", "previous")}
+        self.include_m365 = messages is not None
         self.noop = base / "safeoutputs" / "outputs.jsonl"
         self._write("updates", {"items": updates, "count": len(updates), "complete": complete})
         self._write("inventory", {"resources": resources})
@@ -46,6 +49,8 @@ class Workspace:
             self._write("profile", profile or {"services_in_use": []})
         if issues is not None:
             self._write("issues", issues)
+        if previous is not None:
+            self._write("previous", previous)
 
     def _write(self, name, data):
         self.paths[name].write_text(json.dumps(data), encoding="utf-8")
@@ -56,8 +61,11 @@ class Workspace:
                 "--evidence-hints", str(ROOT / "config" / "evidence-hints.json"),
                 "--m365-notices", str(self.paths["messages"]), "--m365-profile", str(self.paths["profile"]),
                 "--existing-issues", str(self.paths["issues"]), "--output", str(self.paths["output"]),
+                "--include-m365", str(self.include_m365).lower(),
                 "--noop-file", str(self.noop), *extra]
-        prep.main(argv, as_of=AS_OF)
+        if self.paths["previous"].exists():
+            argv.extend(["--previous-report", str(self.paths["previous"])])
+        self.exit_code = prep.main(argv, as_of=AS_OF)
         return json.loads(self.paths["output"].read_text(encoding="utf-8"))
 
     def __enter__(self):
@@ -126,13 +134,14 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(result["candidates"], [])
         self.assertEqual(result["counts"]["out_of_scope"]["azure"], 1)
 
-    def test_already_tracked_notice_is_skipped(self):
+    def test_legacy_tracked_notice_is_re_evaluated_without_duplicate_finding(self):
         updates = [azure_notice("572770", "Support for PowerShell 7.4 ends", ["Azure Functions"])]
         issues = [{"number": 7, "title": "[service-change] Azure 572770: Support for PowerShell 7.4 ends", "state": "OPEN"}]
         with Workspace(updates, [FUNCTION_APP], issues=issues) as ws:
             result = ws.run()
-        self.assertEqual(result["candidates"], [])
-        self.assertEqual(result["already_tracked"][0]["issue"], 7)
+        self.assertEqual(result["candidates"][0]["tracking_issue"]["issue"], 7)
+        self.assertEqual(result["already_tracked"], [])
+        self.assertTrue(any("re-evaluated" in warning for warning in result["warnings"]))
 
     def test_informational_notice_is_deferred_not_evaluated(self):
         updates = [azure_notice("1", "New feature", ["Azure Functions"], tags=("Features",), retire=None)]
@@ -205,6 +214,7 @@ class NoopTests(unittest.TestCase):
         with Workspace([], [FUNCTION_APP], complete=False) as ws:
             result = ws.run()
             self.assertFalse(ws.noop.exists())
+            self.assertEqual(ws.exit_code, 2)
         self.assertTrue(any("incomplete" in warning for warning in result["warnings"]))
 
     def test_no_noop_when_candidates_exist(self):
@@ -212,6 +222,106 @@ class NoopTests(unittest.TestCase):
         with Workspace(updates, [FUNCTION_APP]) as ws:
             ws.run()
             self.assertFalse(ws.noop.exists())
+
+    def test_missing_requested_m365_does_not_become_a_healthy_noop(self):
+        with Workspace([], [FUNCTION_APP]) as ws:
+            result = ws.run("--include-m365", "true")
+            self.assertEqual(ws.exit_code, 2)
+            self.assertFalse(ws.noop.exists())
+        self.assertFalse(result["inputs_complete"])
+        self.assertTrue(any("Microsoft 365" in warning and "missing" in warning for warning in result["warnings"]))
+
+    def test_missing_inventory_does_not_become_a_healthy_noop(self):
+        with Workspace([], []) as ws:
+            ws.paths["inventory"].unlink()
+            result = ws.run()
+            self.assertEqual(ws.exit_code, 2)
+            self.assertFalse(ws.noop.exists())
+        self.assertFalse(result["inputs_complete"])
+
+
+class RevisionTests(unittest.TestCase):
+    def setUp(self):
+        self.notice = azure_notice("572770", "Support for PowerShell 7.4 ends", ["Azure Functions"])
+        self.issues = [{"number": 4, "title": "[service-change] Azure 572770: Original notice", "state": "OPEN"}]
+        with Workspace([self.notice], [FUNCTION_APP]) as ws:
+            first = ws.run()
+        self.previous = {"assessment_state_version": assessment.STATE_VERSION, "assessments": {
+            "Azure 572770": {"fingerprint": first["candidates"][0]["assessment_fingerprint"],
+                             "verdict": "Impacted", "assessed_at": "2026-09-30T00:00:00Z",
+                             "run_url": "https://github.com/amex678/service-change-impact-workflow/actions/runs/1"}}}
+
+    def test_unchanged_notice_and_configuration_skip_ai(self):
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+            self.assertTrue(ws.noop.exists())
+        self.assertEqual(result["candidates"], [])
+        self.assertEqual(result["already_tracked"][0]["issue"], 4)
+
+    def test_changed_notice_is_re_evaluated_and_linked_to_existing_issue(self):
+        changed = {**self.notice, "modified": "2026-10-01T00:00:00Z", "description_text": "Revised conditions"}
+        with Workspace([changed], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(result["candidates"][0]["tracking_issue"]["issue"], 4)
+        self.assertNotEqual(result["candidates"][0]["assessment_fingerprint"],
+                            self.previous["assessments"]["Azure 572770"]["fingerprint"])
+
+    def test_changed_inventory_is_re_evaluated(self):
+        resource = copy.deepcopy(FUNCTION_APP)
+        resource["properties"]["siteConfig.powerShellVersion"] = "7.6"
+        with Workspace([self.notice], [resource], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_expired_assessment_is_re_evaluated(self):
+        self.previous["assessments"]["Azure 572770"]["assessed_at"] = "2026-09-01T00:00:00Z"
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_cannot_evaluate_is_not_cached_as_complete(self):
+        self.previous["assessments"]["Azure 572770"]["verdict"] = "Cannot evaluate"
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_unpublished_finding_is_not_lost(self):
+        with Workspace([self.notice], [FUNCTION_APP], previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_not_impacted_assessment_does_not_need_an_issue(self):
+        self.previous["assessments"]["Azure 572770"]["verdict"] = "Not impacted"
+        with Workspace([self.notice], [FUNCTION_APP], previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(result["candidates"], [])
+        self.assertEqual(result["already_tracked"][0]["verdict"], "Not impacted")
+
+    def test_manual_review_still_forces_re_evaluation(self):
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run("--review-tracked", "true")
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_invalid_state_does_not_silently_skip_candidates(self):
+        self.previous["assessments"]["Azure 572770"]["fingerprint"] = "invalid"
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            with self.assertRaisesRegex(ValueError, "fingerprint"):
+                ws.run()
+
+    def test_future_assessment_time_is_not_treated_as_current(self):
+        self.previous["assessments"]["Azure 572770"]["assessed_at"] = "2026-10-02T00:00:00Z"
+        with Workspace([self.notice], [FUNCTION_APP], issues=self.issues, previous=self.previous) as ws:
+            result = ws.run()
+        self.assertEqual(len(result["candidates"]), 1)
+
+    def test_known_missing_evidence_guard_is_visible_to_the_agent(self):
+        notice = azure_notice("557852", "TLS 1.0 and 1.1", ["Azure Functions"])
+        notice["modified"] = assessment.REVIEWED_REVISIONS["Azure 557852"]
+        with Workspace([notice], [FUNCTION_APP]) as ws:
+            result = ws.run()
+        requirements = result["candidates"][0]["evidence_requirements"]
+        self.assertEqual(requirements["allowed_verdicts"], ["Cannot evaluate", "Needs investigation"])
+        self.assertIn("SCM", requirements["reason"])
 
 
 class SampleDataTests(unittest.TestCase):
@@ -242,7 +352,7 @@ class SampleDataTests(unittest.TestCase):
                 ws.run("--public-output")
 
     def test_public_output_accepts_only_all_sample_inputs(self):
-        with Workspace([], []) as ws:
+        with Workspace([], [], messages=[], profile={"sample": True, "services_in_use": []}) as ws:
             ws._write("inventory", {"sample": True, "resources": []})
             ws._write("messages", {"sample": True, "messages": []})
             ws._write("profile", {"sample": True, "services_in_use": []})

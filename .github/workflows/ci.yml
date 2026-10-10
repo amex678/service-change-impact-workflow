@@ -17,6 +17,9 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.10"
       - name: Unit tests (Python standard library only)
         run: python3 -m unittest discover -s tests -v
 
@@ -39,3 +42,21 @@ jobs:
           persist-credentials: false
       - name: Lint all workflows, including the compiled agentic workflow
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+
+  workflow-compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Install the version-pinned workflow compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install github/gh-aw --pin v0.81.6
+      - name: Check strict compilation and committed lock consistency
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh aw compile service-change-impact --strict
+          git diff --exit-code -- .github/workflows/service-change-impact.lock.yml .github/aw/actions-lock.json

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import publish_report as report  # noqa: E402
+import assessment  # noqa: E402
 
 
 def candidates():
@@ -107,11 +108,55 @@ class ValidationTests(unittest.TestCase):
 
 
 class PublicationTests(unittest.TestCase):
-    def test_compiled_workflow_uploads_validated_staging_after_publication(self):
+    def test_complete_zero_candidate_report_is_visible_and_verifiable(self):
+        data = candidates()
+        data["inputs_complete"] = True
+        data["candidates"] = []
+        data["counts"]["candidates"] = 0
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            self.assertEqual(report.publish(data, report.noop_report(data), output, public_output=True), 0)
+            self.assertEqual(report.verify(output, True), 0)
+            markdown = (output / "impact-report.md").read_text(encoding="utf-8")
+            self.assertIn("the AI agent was not started", markdown)
+            self.assertIn("not an environment-wide no-impact finding", markdown)
+
+    def test_incomplete_zero_candidate_input_cannot_be_published_as_noop(self):
+        data = candidates()
+        data["candidates"] = []
+        data["counts"]["candidates"] = 0
+        data["inputs_complete"] = False
+        with self.assertRaisesRegex(ValueError, "complete inputs"):
+            report.noop_report(data)
+
+    def test_publication_records_the_assessed_revision_fingerprint(self):
+        data = candidates()
+        for candidate in data["candidates"]:
+            candidate["assessment_fingerprint"] = assessment.digest(candidate)
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            report.publish(data, DRAFT, output, public_output=True)
+            metadata = json.loads((output / "candidates.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["assessments"]["Azure 572770"]["verdict"], "Impacted")
+            self.assertEqual(metadata["assessments"]["Azure 572770"]["fingerprint"],
+                              data["candidates"][0]["assessment_fingerprint"])
+            self.assertEqual(report.verify(output, True), 2)
+
+    def test_invented_disk_role_is_not_preserved_in_the_trusted_resource_column(self):
+        data = candidates()
+        data["candidates"][0]["matched_resources"] = [
+            {"name": "disks-02", "type": "microsoft.compute/disks", "sku": {"name": "Standard_LRS"}, "properties": {}}]
+        draft = DRAFT.replace("| sites-01 |", "| disks-02 is a data disk |")
+        markdown = report.canonical_report(data, draft)
+        self.assertNotIn("disks-02 is a data disk", markdown)
+        self.assertIn("OS/data role not captured", markdown)
+
+    def test_compiled_workflow_delivers_validated_report_after_publication(self):
         compiled = (ROOT / ".github" / "workflows" / "service-change-impact.lock.yml").read_text(encoding="utf-8")
         self.assertLess(compiled.index("name: Validate every verdict and stage the complete report"),
-                        compiled.index("name: Upload validated report staging"))
+                        compiled.index("name: Deliver the validated report (including zero-candidate runs)"))
         self.assertIn("overwrite: true", compiled)
+        self.assertNotIn('"upload_artifact":', compiled)
 
     def test_committed_review_covers_all_twelve_candidates_and_the_sms_correction(self):
         data = json.loads((ROOT / "docs" / "reports" / "review-candidates.json").read_text(encoding="utf-8"))

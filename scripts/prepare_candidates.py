@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+import assessment
+
 SIGNAL_ORDER = {"high": 0, "medium": 1, "low": 2}
 TRACKED_TITLE = re.compile(r"\b(Azure|M365) ([A-Za-z0-9._-]+):")
 MONTHS = ["january", "february", "march", "april", "may", "june", "july",
@@ -304,11 +306,17 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
     messages = load_json(args.m365_notices) if args.include_m365 else None
     profile = load_json(args.m365_profile) if args.include_m365 else None
     tracked = tracked_keys(load_json(args.existing_issues, []))
+    previous = load_json(args.previous_report) if args.previous_report else None
+    if args.previous_report and previous is None:
+        raise ValueError(f"Previous assessment snapshot is missing: {args.previous_report}")
+    state = assessment.load_state(previous)
+    policy = assessment.policy_digest()
 
     if args.public_output:
-        if not inventory.get("sample"):
+        if inventory.get("sample") is not True:
             raise ValueError("Public output requires a synthetic Azure inventory.")
-        if args.include_m365 and not (messages and messages.get("sample") and profile and profile.get("sample")):
+        if args.include_m365 and not (messages and messages.get("sample") is True
+                                     and profile and profile.get("sample") is True):
             raise ValueError("Public output requires synthetic Microsoft 365 notices and a synthetic profile.")
 
     resources, coverage = index_inventory(inventory, product_map)
@@ -319,24 +327,45 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
     limits = {"azure": args.max_azure, "m365": args.max_m365}
     taken: Counter = Counter()
     for item in sorted(azure + m365, key=sort_key):
+        item["assessment_fingerprint"] = assessment.fingerprint(item, inventory, profile, product_map, hints, policy)
+        item["assessment_context"] = {key: inventory[key] for key in ("cloud", "reservations", "observations")
+                                      if key in inventory}
+        guard = assessment.evidence_guard(item)
+        if guard:
+            item["evidence_requirements"] = {"allowed_verdicts": sorted(guard[0]), "reason": guard[1]}
+        if item["key"] in tracked:
+            item["tracking_issue"] = tracked[item["key"]]
         brief = {"key": item["key"], "title": item["notice"].get("title"), "signal": item["signal"]["level"],
                  "evidence_score": item["evidence_score"]}
         source = item["source"]
-        if item["key"] in tracked and not args.review_tracked:
-            already.append({**brief, **tracked[item["key"]]})
+        record = state.get(item["key"])
+        if not args.review_tracked and assessment.unchanged(item, record, item["key"] in tracked, as_of):
+            already.append({**brief, **tracked.get(item["key"], {}), "verdict": record["verdict"],
+                            "reason": f"Previously evaluated with unchanged notice/configuration at {record['assessed_at']}"})
         elif item["signal"]["level"] == "low":
             deferred.append({**brief, "reason": item["signal"]["reason"]})
         elif taken[source] >= limits[source]:
             deferred.append({**brief, "reason": f"over the per-run limit of {limits[source]} {source} candidates"})
         else:
-            candidates.append({**item, "tracking_issue": tracked[item["key"]]} if item["key"] in tracked else item)
+            candidates.append(item)
             taken[source] += 1
 
     warnings = []
+    inventory_present = bool(args.azure_inventory and Path(args.azure_inventory).is_file())
+    inputs_complete = bool(updates.get("complete") and not updates.get("error") and inventory_present
+                           and (not args.include_m365 or (messages is not None and profile is not None)))
+    if not inventory_present:
+        warnings.append("Azure inventory is missing; input readiness cannot be assumed.")
+    if args.include_m365 and (messages is None or profile is None):
+        warnings.append("Requested Microsoft 365 notices or profile are missing.")
+    if tracked and not state:
+        warnings.append("No revision-aware assessment state is available; tracked notices will be re-evaluated.")
     if updates.get("error"):
         warnings.append(f"Azure Updates fetch failed: {updates['error']}")
     elif not updates.get("complete"):
         warnings.append("Azure Updates fetch is incomplete; missing notices cannot be treated as no impact.")
+    if updates.get("sample") is True:
+        warnings.append("Azure notice conditions are a frozen paraphrased reference fixture, not a live API fetch.")
     if coverage["unmapped_types"]:
         warnings.append("Some inventory resource types are not mapped to Azure Updates products and were not evaluated.")
     if any(entry["reason"].startswith("over the per-run limit") for entry in deferred):
@@ -350,13 +379,17 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
 
     return {
         "generated_at": as_of.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "inputs_complete": inputs_complete,
+        "assessment_state_version": assessment.STATE_VERSION,
+        "assessments": state,
         "inputs": {
             "azure_updates": {"path": args.azure_updates, "count": updates.get("count", len(updates.get("items", []))),
+                              "source": updates.get("source"), "sample": updates.get("sample") is True,
                               "complete": bool(updates.get("complete")), "error": updates.get("error"),
                               "since": updates.get("since"), "windows": updates.get("windows", [])},
             "azure_inventory": {"path": args.azure_inventory, "sample": bool(inventory.get("sample")),
                                 "captured_at": inventory.get("captured_at"), "scope": inventory.get("scope")},
-            "m365": {"included": bool(messages and profile),
+            "m365": {"requested": args.include_m365, "included": bool(messages and profile),
                      "notices_path": args.m365_notices if args.include_m365 else None,
                      "profile_path": args.m365_profile if args.include_m365 else None,
                      "sample": bool((messages and messages.get("sample")) or (profile and profile.get("sample"))),
@@ -434,6 +467,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--m365-profile")
     parser.add_argument("--include-m365", default="true", type=parse_boolean)
     parser.add_argument("--existing-issues")
+    parser.add_argument("--previous-report", help="Candidate metadata from the previous successful report artifact")
     parser.add_argument("--review-tracked", default="false", type=parse_boolean,
                         help="Re-evaluate tracked notices without requesting duplicate Issues or pull requests")
     parser.add_argument("--public-output", action="store_true",
@@ -460,7 +494,7 @@ def main(argv: Iterable[str] | None = None, as_of: datetime | None = None) -> in
             handle.write(summary)
     print(summary)
 
-    healthy = result["inputs"]["azure_updates"]["complete"] and not result["inputs"]["azure_updates"]["error"]
+    healthy = result["inputs_complete"]
     if args.noop_file and not result["candidates"] and healthy:
         message = (f"No new notices need evaluation: {result['counts']['already_tracked']} already tracked, "
                    f"{result['counts']['deferred']} deferred, out of scope {describe_out_of_scope(result['counts'])}.")
@@ -468,6 +502,10 @@ def main(argv: Iterable[str] | None = None, as_of: datetime | None = None) -> in
         with open(args.noop_file, "a", encoding="utf-8") as handle:
             handle.write(json.dumps({"type": "noop", "message": message}) + "\n")
         print("noop written: the agent will be skipped")
+    if not healthy:
+        print("Candidate preparation failed: required inputs are missing or incomplete; no healthy no-op was emitted.",
+              file=sys.stderr)
+        return 2
     return 0
 
 

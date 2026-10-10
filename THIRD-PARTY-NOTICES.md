@@ -3,8 +3,8 @@
 The files identified as generated/imported GitHub Agentic Workflows assets in
 [the README](README.md#starting-assets-and-original-contributions) originate
 from [github/gh-aw](https://github.com/github/gh-aw). Their license is reproduced
-below. This notice does not assign a license to the original work in this
-repository.
+below. Original work in this repository is separately covered by the
+owner-authorized [MIT license](LICENSE).
 
 ## GitHub Agentic Workflows
 

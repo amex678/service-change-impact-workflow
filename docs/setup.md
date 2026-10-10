@@ -73,13 +73,18 @@ To review already tracked findings without duplicate Issues/PRs, run with `revie
 gh workflow run service-change-impact.lock.yml -f review_tracked=true
 ```
 
-The existing Issue link stays in each candidate. The agent re-evaluates it in the report but must not create a duplicate Issue/PR. Normal runs still skip tracked notices.
+The existing Issue link stays in each candidate. The agent re-evaluates it in the report and adds a bounded comment, but must not create a duplicate Issue/PR or overwrite a human decision. Normal runs skip only unchanged, non-expired verified assessments; a changed notice/configuration/policy, missing state or Cannot evaluate verdict triggers reassessment.
+
+To reproduce the fixed input shape offline without API calls, tokens or AI, use
+[the reference replay](reproduce.md). For a labelled frozen GitHub manual run,
+select `input_mode=reference`. The default `live` mode still fetches current
+public notices.
 
 For an existing bot-created draft PR blocked as `action_required`, a repository owner can trigger `ci.yml` manually at its head branch, or push a reviewed empty commit using their own identity to obtain PR-linked checks. On October 10, PR 9 passed the latter path. Do not merge or deploy just to start CI. Automatic triggering for future generated PRs requires the scoped token above; do not repurpose the Copilot engine token.
 
 ## 6. Turn on the schedule
 
-After a few reviewed manual runs, uncomment `schedule: daily` in the workflow Markdown, run `gh aw compile`, and commit. Notices already tracked by an Issue are skipped, so daily runs stay small, and runs with nothing new do not start the AI.
+After reviewed repeated manual runs and a cost budget, uncomment `schedule: daily`, compile and commit. Revision-aware state reduces repeated work but does not permanently skip updated notices. Verify missing-input failures and visible zero-candidate reports before enabling the schedule.
 
 Generated maintenance is separately disabled by `"maintenance": false` in `.github/workflows/aw.json`; recompiling preserves this setting. Leave it disabled during initial manual validation.
 

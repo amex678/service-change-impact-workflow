@@ -15,8 +15,10 @@ from pathlib import Path
 from string import Template
 from urllib.parse import parse_qs, urlparse
 
+import assessment
+
 ROOT = Path(__file__).resolve().parents[1]
-VERDICTS = ("Impacted", "Not impacted", "Needs investigation", "Cannot evaluate")
+VERDICTS = assessment.VERDICTS
 FILES = {"impact-report.md", "index.html", "candidates.json"}
 KEY = re.compile(r"\b(Azure|M365) ([A-Za-z0-9._-]+)(?=:|\]|$)")
 HEADERS = ("Notice", "Change and effective date", "Matched resources or settings / checked scope",
@@ -46,10 +48,10 @@ def sections(markdown: str) -> tuple[str, str]:
 
 def require_samples(candidates: dict) -> None:
     inputs = candidates["inputs"]
-    if not inputs["azure_inventory"].get("sample"):
+    if inputs["azure_inventory"].get("sample") is not True:
         raise ValueError("Public report requires a synthetic Azure inventory.")
     m365 = inputs["m365"]
-    if m365["included"] and not (m365.get("notices_sample") and m365.get("profile_sample")):
+    if m365["included"] and not (m365.get("notices_sample") is True and m365.get("profile_sample") is True):
         raise ValueError("Public report requires synthetic Microsoft 365 notices and profile.")
 
 
@@ -91,6 +93,8 @@ def validate_report(candidates: dict, markdown: str, public_output: bool = False
     if len(set(detail_keys)) != len(detail_keys) or set(detail_keys) - set(expected):
         raise ValueError("Detail headings have duplicate or unexpected candidate keys.")
     for row in rows:
+        candidate = next(item for item in candidates["candidates"] if item["key"] == row[0])
+        assessment.check_verdict(candidate, row[4])
         if row[4] in {"Impacted", "Needs investigation"} and row[0] not in detail_keys:
             raise ValueError(f"Missing deciding evidence detail section for {row[0]}.")
         if row[0].startswith("Azure ") and not candidates["inputs"]["azure_updates"]["complete"]:
@@ -124,11 +128,14 @@ def canonical_report(candidates: dict, draft: str, run_url: str | None = None,
         "> SYNTHETIC SAMPLE inputs are explicitly marked below; do not treat them as real-environment evidence."
         if sample else "> Sanitized configuration snapshot; verdicts remain proposals for human review.",
         "> AI-assisted evidence review is not human approval. Nothing was merged or deployed.", "",
+        "> Deterministic no-op: no candidates required evaluation; the AI agent was not started."
+        if not rows else "> Known-revision evidence guards are checked; remaining prose still requires human review.", "",
         "## 1. Scope and completeness", "",
         "| Item | Value |", "|---|---|",
         f"| Input snapshot | {cell(candidates['generated_at'])} |",
         f"| Run | {cell(run_url or 'Reviewed local replay; not a workflow or live-environment test')} |",
         f"| Azure Updates | {azure['count']} notices; {'complete' if azure['complete'] else 'INCOMPLETE'}; "
+        f"{'frozen paraphrased reference (not live)' if azure.get('sample') else 'public API snapshot'}; "
         f"recent since {cell(str(azure.get('since')))} plus active retirements |",
         f"| Azure inventory | {cell(str(inventory.get('scope')))}; captured {cell(str(inventory.get('captured_at')))}; "
         f"{candidates['coverage']['resources_mapped']}/{candidates['coverage']['resources_total']} resources mapped; "
@@ -151,6 +158,7 @@ def canonical_report(candidates: dict, draft: str, run_url: str | None = None,
         title = f"{candidate['key']}: {candidate['notice']['title']}"
         url = notice_url(candidate, m365.get("notices_sample", False))
         values[0] = f"[{title}]({url})" if url else title
+        values[2] = assessment.captured_scope(candidate) or values[2]
         lines.append("| " + " | ".join(cell(value) for value in values) + " |")
     lines += ["", "## 3. Details for Impacted and Needs investigation", "", details, "",
               "## 4. Not evaluated in this run", "", "| Notice | Reason |", "|---|---|"]
@@ -165,7 +173,7 @@ def canonical_report(candidates: dict, draft: str, run_url: str | None = None,
         entries = candidates["coverage"][key]
         lines.append(f"- {label}: " + (", ".join(f"{name} ({count})" for name, count in entries.items()) or "none"))
     lines += ["", "## 6. Reviewer checklist", "",
-              "- [x] Every selected candidate has exactly one valid verdict and deciding evidence (automated validation).",
+              "- [x] Candidate coverage, known-revision guards and captured-resource labels passed automated validation.",
               "- [ ] A human owner accepts or corrects the evidence and the stated scope.",
               "- [ ] Missing usage, cloud, client or policy settings have been obtained where needed.",
               "- [ ] Owners and dates are assigned to findings before action.",
@@ -275,6 +283,16 @@ def snapshot(candidates: dict, run_url: str | None) -> dict:
     return result
 
 
+def noop_report(candidates: dict) -> str:
+    if candidates["candidates"] or candidates.get("inputs_complete") is not True:
+        raise ValueError("A no-op report requires complete inputs and zero selected candidates.")
+    return ("# Service-change impact report\n\n## 2. Verdicts\n\n"
+            "| " + " | ".join(HEADERS) + " |\n|---|---|---|---|---|---|\n\n"
+            "## 3. Details for Impacted and Needs investigation\n\n"
+            "No candidate required evaluation. Previously evaluated, deferred and out-of-scope notices "
+            "remain explicitly listed; this is not an environment-wide no-impact finding.\n")
+
+
 def safe_directory(directory: Path) -> None:
     if any(path.is_symlink() for path in (directory, *directory.parents)):
         raise ValueError(f"Report directories must not be symlinks: {directory}")
@@ -287,6 +305,15 @@ def publish(candidates: dict, draft: str, output: Path, stage: Path | None = Non
             run_url: str | None = None, public_output: bool = False) -> int:
     run_url = run_url or candidates.get("report_run_url")
     data = snapshot(candidates, run_url)
+    rows = validate_report(data, draft, public_output)
+    state = assessment.load_state(data)
+    for row in rows:
+        candidate = next(item for item in data["candidates"] if item["key"] == row[0])
+        if candidate.get("assessment_fingerprint"):
+            state[row[0]] = {"fingerprint": candidate["assessment_fingerprint"], "verdict": row[4],
+                             "assessed_at": data["generated_at"], "run_url": run_url}
+    data["assessment_state_version"] = assessment.STATE_VERSION
+    data["assessments"] = state
     markdown = canonical_report(data, draft, run_url, public_output)
     rendered = render_html(data, markdown)
     payloads = {"impact-report.md": markdown, "index.html": rendered,
@@ -334,7 +361,9 @@ def main() -> int:
             if Path(args.report).is_symlink() or Path(args.candidates).is_symlink():
                 raise ValueError("Report inputs must not be symlinks.")
             candidates = json.loads(Path(args.candidates).read_text(encoding="utf-8"))
-            count = publish(candidates, Path(args.report).read_text(encoding="utf-8"), Path(args.output_dir),
+            draft = (noop_report(candidates) if not candidates["candidates"] else
+                     Path(args.report).read_text(encoding="utf-8"))
+            count = publish(candidates, draft, Path(args.output_dir),
                             Path(args.stage_dir) if args.stage_dir else None, args.run_url, args.public_output)
             print(f"Report published: {count}/{count} candidate verdicts; Markdown, HTML and metadata.")
     except (OSError, ValueError, KeyError, TypeError) as error:

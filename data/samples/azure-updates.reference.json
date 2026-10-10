@@ -1,0 +1,71 @@
+{
+  "source": "FROZEN DEMO: paraphrased conditions from public notices, not a live API fetch",
+  "sample": true,
+  "fetched_at": "2026-10-10T01:16:52Z",
+  "since": "frozen reference fixture",
+  "complete": true,
+  "count": 10,
+  "windows": [],
+  "items": [
+    {
+      "id": "500157", "title": "Retirement: Standard HDD OS disks", "url": "https://azure.microsoft.com/updates?id=500157",
+      "products": ["Azure Disk Storage"], "tags": ["Retirements"],
+      "modified": "2025-09-08T21:00:36.2978872Z", "availabilities": [{"ring": "Retirement", "year": 2028, "month": "September"}],
+      "description_text": "Paraphrased reference: Standard HDD OS disks retire on 2028-09-08. Standard HDD data disks are excluded."
+    },
+    {
+      "id": "572770", "title": "Retirement: PowerShell 7.4 support", "url": "https://azure.microsoft.com/updates?id=572770",
+      "products": ["Azure Functions"], "tags": ["Retirements"],
+      "modified": "2026-09-23T16:50:05.5913061Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "November"}],
+      "description_text": "Paraphrased reference: PowerShell 7.4 support ends on 2026-11-10; upgrade to 7.6. Linux Consumption requires a plan migration."
+    },
+    {
+      "id": "557852", "title": "Retirement: TLS 1.0 and 1.1", "url": "https://azure.microsoft.com/updates?id=557852",
+      "products": ["App Service", "Azure Functions", "Logic Apps"], "tags": ["Retirements"],
+      "modified": "2026-05-21T21:45:32.2389902Z", "availabilities": [{"ring": "Retirement", "year": 2027, "month": "May"}],
+      "description_text": "Paraphrased reference: legacy TLS clients cannot connect after 2027-05-31; verify endpoint settings and client compatibility."
+    },
+    {
+      "id": "493779", "title": "Retirement: Azure Disk Encryption", "url": "https://azure.microsoft.com/updates?id=493779",
+      "products": ["Virtual Machines", "Virtual Machine Scale Sets"], "tags": ["Retirements"],
+      "modified": "2025-09-24T11:45:14.6965458Z", "availabilities": [{"ring": "Retirement", "year": 2028, "month": "September"}],
+      "description_text": "Paraphrased reference: Azure Disk Encryption retires on 2028-09-15. Determine ADE usage, not SSE/CMK or Disk Encryption Set presence."
+    },
+    {
+      "id": "551523", "title": "Retirement: VM client data export preview", "url": "https://azure.microsoft.com/updates?id=551523",
+      "products": ["Azure Monitor"], "tags": ["Retirements"],
+      "modified": "2026-01-30T18:30:02.6205929Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "July"}],
+      "description_text": "Paraphrased reference: the specific preview exporting VM client data to Event Hubs/Storage retires on 2026-07-31; AMA generally remains supported."
+    },
+    {
+      "id": "560948", "title": "Retirement: Reserved VM Instances for select series", "url": "https://azure.microsoft.com/updates?id=560948",
+      "products": ["Virtual Machines"], "tags": ["Retirements"],
+      "modified": "2026-05-05T20:00:13.4947532Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "July"}],
+      "description_text": "Paraphrased reference: selected-series reservation purchases/renewals cease from 2026-07-01. Existing reservations continue through their term; inspect reservation orders."
+    },
+    {
+      "id": "498749", "title": "Retirement: Defender for Cloud in 21Vianet", "url": "https://azure.microsoft.com/updates?id=498749",
+      "products": ["Microsoft Defender for Cloud"], "tags": ["Retirements"],
+      "modified": "2025-08-20T16:30:32.3883784Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "August"}],
+      "description_text": "Paraphrased reference: this retirement on 2026-08-18 is limited to Microsoft Azure operated by 21Vianet."
+    },
+    {
+      "id": "azure-monitor-data-collection-api-retirement", "title": "Data Collector API retirement", "url": "https://azure.microsoft.com/updates?id=azure-monitor-data-collection-api-retirement",
+      "products": ["Azure Monitor"], "tags": ["Retirements"],
+      "modified": "2023-09-22T23:00:57Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "September"}],
+      "description_text": "Paraphrased reference: legacy Data Collector API ingestion retires on 2026-09-14; custom senders require DCR-based ingestion."
+    },
+    {
+      "id": "559311", "title": "Retirement: Functions v3 on Linux Consumption", "url": "https://azure.microsoft.com/updates?id=559311",
+      "products": ["Azure Functions"], "tags": ["Retirements"],
+      "modified": "2026-04-17T19:00:12.8775967Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "September"}],
+      "description_text": "Paraphrased reference: the 2026-09-30 enforcement requires both Linux Consumption and runtime v3."
+    },
+    {
+      "id": "501673", "title": "Retirement: SCOM Managed Instance", "url": "https://azure.microsoft.com/updates?id=501673",
+      "products": ["Azure Monitor"], "tags": ["Retirements"],
+      "modified": "2025-10-03T18:15:20.4239852Z", "availabilities": [{"ring": "Retirement", "year": 2026, "month": "September"}],
+      "description_text": "Paraphrased reference: SCOM Managed Instance retires on 2026-09-30; ordinary Application Insights/Log Analytics resources are not SCOM MI."
+    }
+  ]
+}
