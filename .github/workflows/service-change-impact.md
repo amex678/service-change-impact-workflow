@@ -86,6 +86,8 @@ steps:
     run: |
       gh issue list --label service-change --state all --limit 500 --json number,title,state \
         > run/existing-issues.json
+      gh pr list --label service-change --state open --limit 100 --json number,title,state \
+        > run/existing-pull-requests.json
   - name: Pre-match notices against the inventory (deterministic)
     env:
       INCLUDE_M365: ${{ github.event.inputs.include_m365 }}
@@ -115,6 +117,7 @@ steps:
         --m365-profile "$(pick m365-tenant-profile.json m365-tenant-profile.sample.json)" \
         --include-m365 "${INCLUDE_M365:-true}" \
         --existing-issues run/existing-issues.json \
+        --existing-pull-requests run/existing-pull-requests.json \
         --review-tracked "${REVIEW_TRACKED:-false}" \
         "${public_args[@]}" "${previous_args[@]}" \
         --output run/candidates.json \
@@ -188,6 +191,20 @@ jobs:
           python3 scripts/publish_report.py --verify-directory report-artifact/run/report "${public_args[@]}"
 
 safe-outputs:
+  steps:
+    - name: Download the validated report before applying safe outputs
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: report
+        path: verified-report
+    - name: Reject duplicate finding and PR creation before writes
+      env:
+        GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/agent_output.json
+      run: |
+        python3 scripts/check_safe_outputs.py \
+          --candidates verified-report/run/report/candidates.json \
+          --report verified-report/run/report/impact-report.md \
+          --outputs "$GH_AW_AGENT_OUTPUT"
   allowed-domains: [default-safe-outputs, "azure.microsoft.com", "learn.microsoft.com", "www.microsoft.com"]
   create-issue:
     title-prefix: "[service-change] "
@@ -247,6 +264,7 @@ Rules:
 8. Scope a Not impacted verdict to captured facts. An application's `minTlsVersion` does not capture the SCM site's TLS setting or client compatibility. A region alone is not an explicit subscription cloud identifier. Missing deciding facts require Needs investigation, not an assumed default.
 9. A candidate with `tracking_issue` is a re-review of an existing finding. Evaluate it in the report, link that Issue and add a bounded re-assessment comment with the current verdict, changed facts, remaining gaps and run link. Do not create another Issue or pull request, overwrite a human review, or close the finding.
 10. Do not label a disk as a data disk just because `osType` is missing. Keep its OS/data role unknown until captured. Reservations require reservation-order evidence: a current VM series can be excluded without proving that the account has no other affected reservations.
+11. A `tracking_pull_request` is an existing open remediation proposal. Link it; do not create another PR. The safe-output job mechanically rejects creation for an already tracked finding or open PR before any writes.
 
 ## What to produce
 
@@ -262,7 +280,7 @@ Rules:
 
    For candidates with `tracking_issue`, use `add_comment` on that Issue instead, even if the updated verdict is Not impacted; retain the historical finding for human disposition. If no new Issue or comment is required, call `noop` after completing the report; the trusted publisher still delivers it.
 
-3. **Draft pull request (Azure only, at most one).** When an **Impacted** Azure notice maps to a resource declared in `infra/` and the fix is a small, well-defined change (for example a runtime version bump the notice recommends):
+3. **Draft pull request (Azure only, at most one).** First check the candidate: if it has `tracking_issue` OR `tracking_pull_request`, do not edit `infra/`, create a branch, commit a patch, or request `create_pull_request`. Link the existing finding/PR in the report and reassessment comment instead. Only an untracked **Impacted** Azure notice mapped to declared `infra/` with a small, well-defined fix can qualify:
    - Edit only files under `infra/`, keeping the change minimal.
    - Title it `Azure <notice id>: <what changes>`.
    - In the body, show the change as before → after, why it resolves the notice, the risks, how a reviewer should validate it (for example `az bicep build` and a what-if on a verification resource group), and how to roll back. State that it must be deployed only after human approval.

@@ -49,9 +49,11 @@ fixture. A reference run is not evidence of current Microsoft announcements.
 The report artifact is delivered by a trusted deterministic post-step, not an
 agent upload request. `verify-report` validates delivered files and exact
 candidate coverage. For zero candidates, the Copilot harness detects the
-pre-written no-op, skips model inference, and the publisher still delivers
+pre-written no-op, skips the main analysis agent's model inference, and the publisher still delivers
 the zero-candidate scope report. Missing or incomplete inputs fail explicitly
 rather than becoming a healthy no-op.
+Threat detection remains enabled as a separate job and can still incur model
+cost. Main-agent skipping is not a claim that every workflow job is AI-free.
 
 ## Reassessment rather than permanent ID-only skipping
 
@@ -64,6 +66,11 @@ changed policy, missing state, Cannot evaluate verdict or assessment age of
 
 Existing findings are kept: reassessments add bounded comments, not duplicate
 Issues, closures, replacement of human decisions, or another remediation PR.
+The safe-output job downloads the trusted validated report and rejects duplicate
+Issue/PR creation requests before its handler applies writes. The first
+reference validation produced an unwanted duplicate PR despite the prompt;
+that PR was closed, and the exact request is now rejected by this mechanical
+gate. A valid report shape alone does not prove that queued writes are valid.
 An Impacted/Needs investigation assessment with no corresponding finding is
 not silently skipped. Normal no-op runs preserve prior assessment timestamps,
 so repeatedly checking unchanged input cannot indefinitely extend freshness.

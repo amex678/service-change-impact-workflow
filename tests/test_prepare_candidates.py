@@ -169,6 +169,15 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(len(result["deferred"]), 2)
         self.assertEqual(result["already_tracked"], [])
 
+    def test_open_remediation_pr_is_exposed_to_the_creation_guard(self):
+        updates = [azure_notice("572770", "PowerShell support ends", ["Azure Functions"])]
+        with Workspace(updates, [FUNCTION_APP]) as ws:
+            prs = Path(ws.dir.name) / "pull-requests.json"
+            prs.write_text(json.dumps([{"number": 9, "title": "[service-change] Azure 572770: upgrade",
+                                        "state": "OPEN"}]), encoding="utf-8")
+            result = ws.run("--existing-pull-requests", str(prs))
+        self.assertEqual(result["candidates"][0]["tracking_pull_request"], {"number": 9, "state": "OPEN"})
+
     def test_overdue_retirement_is_flagged(self):
         updates = [azure_notice("1", "Old runtime retired", ["Azure Functions"], retire=(2026, "August"))]
         with Workspace(updates, [FUNCTION_APP]) as ws:

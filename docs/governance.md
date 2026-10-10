@@ -46,6 +46,13 @@ revisions reject five historical unsupported verdicts, and resource labels are
 derived from the captured inventory. These checks do not prove every sentence
 or replace human approval. See [reproduction and limits](reproduce.md).
 
+The first reference run 38016574401 created duplicate draft PR 14 despite
+instructions to reuse PR 9. PR 14 was closed without merging. The follow-up
+adds a native pre-handler safe-output gate: selected-candidate verdicts and
+existing finding/PR context must support any creation request. The exact
+historical duplicate request fails this guard. This is an enforced validation
+step, not merely another prompt instruction.
+
 ## Permissions and boundaries
 
 | Component | Access |
@@ -77,7 +84,7 @@ Threat detection is on by default with safe outputs: the agent output is checked
 
 ## Cost and reliability controls
 
-- Complete runs with nothing requiring reassessment write a no-op before model inference, publish a visible scope report and retain the unchanged assessment timestamps.
+- Complete runs with nothing requiring reassessment skip the main analysis agent's inference, publish a visible scope report and retain unchanged assessment timestamps. Separate threat detection remains enabled and can incur cost.
 - Per-run limits: 10 Azure and 5 Microsoft 365 candidates; the agent job times out after 30 minutes.
 - Scheduled runs stay off until reviewed manual runs succeed. GitHub may delay scheduled runs; the no-op runs Issue shows when the last successful check happened, so a missing check is visible rather than silently treated as all clear.
 - CI runs unit tests, builds the Bicep file and lints every workflow, including the compiled agentic workflow.

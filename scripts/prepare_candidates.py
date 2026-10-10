@@ -306,6 +306,10 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
     messages = load_json(args.m365_notices) if args.include_m365 else None
     profile = load_json(args.m365_profile) if args.include_m365 else None
     tracked = tracked_keys(load_json(args.existing_issues, []))
+    prs = load_json(args.existing_pull_requests) if args.existing_pull_requests else []
+    if args.existing_pull_requests and prs is None:
+        raise ValueError(f"Existing PR snapshot is missing: {args.existing_pull_requests}")
+    tracked_prs = tracked_keys(prs)
     previous = load_json(args.previous_report) if args.previous_report else None
     if args.previous_report and previous is None:
         raise ValueError(f"Previous assessment snapshot is missing: {args.previous_report}")
@@ -335,6 +339,9 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
             item["evidence_requirements"] = {"allowed_verdicts": sorted(guard[0]), "reason": guard[1]}
         if item["key"] in tracked:
             item["tracking_issue"] = tracked[item["key"]]
+        if item["key"] in tracked_prs:
+            item["tracking_pull_request"] = {"number": tracked_prs[item["key"]]["issue"],
+                                             "state": tracked_prs[item["key"]]["state"]}
         brief = {"key": item["key"], "title": item["notice"].get("title"), "signal": item["signal"]["level"],
                  "evidence_score": item["evidence_score"]}
         source = item["source"]
@@ -467,6 +474,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--m365-profile")
     parser.add_argument("--include-m365", default="true", type=parse_boolean)
     parser.add_argument("--existing-issues")
+    parser.add_argument("--existing-pull-requests", help="Open finding PRs, used to block duplicate remediation proposals")
     parser.add_argument("--previous-report", help="Candidate metadata from the previous successful report artifact")
     parser.add_argument("--review-tracked", default="false", type=parse_boolean,
                         help="Re-evaluate tracked notices without requesting duplicate Issues or pull requests")
