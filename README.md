@@ -2,13 +2,13 @@
 
 Turn Microsoft service-change notices into evidence-based, human-approved actions in GitHub.
 
-> **Status (2026-10-06): prototype, first agentic execution partially verified.** The private submission repository is [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow). All 33 unit tests and workflow compilation passed again locally on October 6. The [first run](https://github.com/amex678/service-change-impact-workflow/actions/runs/37400924744) failed on an unavailable implicit model (HTTP 400). With owner-selected `gpt-5.4`, [run 37401375853](https://github.com/amex678/service-change-impact-workflow/actions/runs/37401375853) completed with a green Actions status and created six finding Issues, one grouping Issue and [draft PR #9](https://github.com/amex678/service-change-impact-workflow/pull/9). However, report upload failed non-fatally: its staging artifact was missing. A green run does not yet prove all required outputs were delivered.
+> **Status (2026-10-10): reviewed sample prototype.** The owner authorized making [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow) public after checking its tracked history and outputs for real data and credentials. The [reviewed report](https://amex678.github.io/service-change-impact-workflow/) covers all 12 selected candidates: **2 Impacted, 3 Not impacted within stated scope, 7 Needs investigation**. It is an AI-assisted evidence review, not human approval or live-environment validation.
 
-Remaining first-run checks: fix report publication, correct literal `\n` formatting and the redacted source link in [Issue #4](https://github.com/amex678/service-change-impact-workflow/issues/4), validate all verdicts, and run CI on the generated PR (no checks were triggered automatically). The PR changes only the PowerShell runtime default from 7.4 to 7.6 and remains unmerged.
+The six original findings were reviewed and corrected where needed: SMS policy enablement does not prove SMS primary sign-in; ADE is not the same as server-side encryption using a Disk Encryption Set; unclassified disks and unobserved TLS/SCM/cloud settings remain explicit gaps. [Draft PR #9](https://github.com/amex678/service-change-impact-workflow/pull/9) remains unmerged, with [PR-linked CI](https://github.com/amex678/service-change-impact-workflow/actions/runs/38010067772) and [offline infrastructure validation](https://github.com/amex678/service-change-impact-workflow/actions/runs/38010067790) passing.
 
-> **Demo boundary:** The owner registered the Copilot secret; its value was not read or recorded. Branch protection is unavailable on the current private-repository plan (HTTP 403), so approval enforcement is not demonstrated. No automatic merge or Azure deployment is authorized; Azure credentials are not configured. Daily analysis and generated maintenance are disabled. See [current governance status](docs/governance.md#current-demo-deployment-2026-10-06).
+The original [October 6 run](https://github.com/amex678/service-change-impact-workflow/actions/runs/37401375853) created Issues and the draft PR but failed to deliver the report despite its green status. Publication now validates every candidate row, stages Markdown/HTML/metadata deterministically, and fails a separate job if the required artifact is missing or inconsistent. The reviewed replay is not represented as recovery of the unpublished original report.
 
-**CI verified on GitHub (2026-10-06):** [run 37398436326](https://github.com/amex678/service-change-impact-workflow/actions/runs/37398436326) passed all three jobs: unit tests, Bicep build and actionlint. This verifies the implementation checks, not an end-to-end agentic run.
+> **Demo boundary:** public reports accept synthetic inventory and fictional Microsoft 365 inputs only. No automatic merge, Azure deployment or Microsoft 365 setting change is authorized. Azure credentials/variables are not configured; daily analysis and generated maintenance remain disabled. Approval enforcement and actual runtime smoke tests remain unverified. See [governance](docs/governance.md).
 
 ## Why
 
@@ -34,18 +34,18 @@ flowchart LR
 ```
 
 1. **Deterministic steps** (`scripts/`) fetch Azure Updates, including still-relevant retirements, map inventory resource types to Azure Updates product names, rank candidates, and skip notices already tracked by an Issue. When nothing needs evaluation they record a no-op and the AI run is skipped.
-2. **The agent** ([`.github/workflows/service-change-impact.md`](.github/workflows/service-change-impact.md)) reads only the prepared candidates, checks each notice's conditions against the configuration, and gives one of four verdicts: *Impacted*, *Not impacted*, *Needs investigation* or *Cannot evaluate*.
+2. **The agent** ([`.github/workflows/service-change-impact.md`](.github/workflows/service-change-impact.md)) reads the prepared candidates, checks each notice's conditions against the configuration, and gives one of four verdicts: *Impacted*, *Not impacted*, *Needs investigation* or *Cannot evaluate*. A trusted post-step validates exact candidate coverage and publishes the report files; a final job verifies their delivery.
 3. **Safe outputs** turn verdicts into Issues and, for Azure changes that are declared in `infra/`, at most one **draft** pull request. Microsoft 365 notices stop at an Issue; the workflow never changes tenant settings.
-4. **People decide.** An Azure change reaches the verification environment only after pull request approval and a second environment approval ([`infra-deploy.yml`](.github/workflows/infra-deploy.yml)).
+4. **People decide.** The intended Azure delivery uses pull request approval and a second environment approval ([`infra-deploy.yml`](.github/workflows/infra-deploy.yml)). These gates are not demonstrated in this sample deployment; no Azure change is authorized here.
 
 ## Demo golden path (about 3 minutes)
 
 | Step | What the audience sees |
 |---|---|
 | 1. Run `service-change-impact` manually | Step summary: live Azure notices plus 4 sample Microsoft 365 notices reduced to a short ranked candidate list (on 2026-10-01: 206 Azure notices → 12 candidates), with coverage gaps and warnings |
-| 2. Verdicts (expected) | Azure 572770 (PowerShell 7.4 support ends 2026-11-10): *Impacted*, because `sites-01` runs PowerShell 7.4. Azure 500157 (OS disks on Standard HDD retire 2028-09-08): *Impacted* for `disks-01` only. TLS 1.0/1.1 retirement: *Not impacted*, because the app enforces TLS 1.2. Sample SMS sign-in notice: *Impacted*, Issue only |
+| 2. Reviewed verdicts | Azure 572770: *Impacted* for PowerShell 7.4. Azure 500157: *Impacted* for `disks-01`, other disk roles treated separately. TLS: application endpoint already excludes legacy TLS, but SCM/clients need investigation. Sample SMS: *Needs investigation* because primary sign-in was not captured |
 | 3. Draft pull request (expected) | `infra/main.bicep`: `powerShellVersion` 7.4 → 7.6, with risks, validation and rollback |
-| 4. Human gates | Review with CODEOWNERS, CI, then environment approval before the verification deployment |
+| 4. Human gates | Show the passing draft-PR checks and the remaining approval/runtime-validation steps. Do not claim enforced approval or deployment |
 
 The inventory and Microsoft 365 data in this repository are synthetic samples (`"sample": true`), and every output says so.
 
@@ -112,6 +112,7 @@ docs/                                             Setup and governance
 ## Starting assets and original contributions
 
 - **Generated by GitHub Agentic Workflows (MIT)** with `gh aw init` and `gh aw compile`: `.github/agents/agentic-workflows.md`, `.github/skills/agentic-workflow*/`, `.github/workflows/copilot-setup-steps.yml`, `.github/mcp.json`, `.github/aw/actions-lock.json`, `.gitattributes`, and every `*.lock.yml`.
+- Its required copyright and license notice is preserved in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 - **Data**: Azure Updates from Microsoft's public Release Communications API (read at run time; `config/azure-updates-products.json` is a snapshot of its product names).
 - **Original work in this repository**: the workflow instructions and configuration, all scripts and tests, configuration maps, synthetic samples, the report template, the demo Bicep, the CI and deployment workflows, and the documentation. The four-verdict rubric comes from the author's earlier manual impact assessments.
 
@@ -125,12 +126,17 @@ Verified locally on 2026-10-01:
 - `gh aw compile` (v0.81.6) reports 0 errors and 0 warnings.
 - `az bicep build` succeeds.
 
+Reviewed on 2026-10-10:
+
+- All 12 selected candidates and the six original finding Issues, with source conditions and sample configuration.
+- Draft PR 9 has passing PR-linked tests, Bicep build, actionlint and offline infrastructure validation.
+- Report validation rejects missing/duplicate verdicts, invalid verdicts, incomplete inputs treated as no impact, malformed newline formatting, unsafe links and tampered/missing report files.
+- Workflow compilation succeeds in strict mode; public output refuses real inventory/tenant inputs.
+
 Not yet verified:
 
-- A run on GitHub Actions, including Copilot engine authentication and the MRC MCP server behind the gateway.
-- The no-op skip before the AI run.
-- The quality of the agent's Issues and pull request.
-- `infra-deploy.yml` against Azure.
+- No-op skipping on GitHub Actions, human approval enforcement, real-environment accuracy or runtime compatibility.
+- `infra-deploy.yml` against Azure; no deployment was performed.
 
 Verified on GitHub on 2026-10-06: unit tests, Bicep build and actionlint ([CI evidence](https://github.com/amex678/service-change-impact-workflow/actions/runs/37398436326)). The initial lint failure was resolved by disabling generated maintenance and adding a file-specific compatibility exception for gh-aw's `concurrency.queue`; other lint diagnostics remain enabled.
 

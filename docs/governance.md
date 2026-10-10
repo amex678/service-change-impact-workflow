@@ -4,11 +4,25 @@ How the workflow keeps people in control, limits what automation can touch, and 
 
 ## Current demo deployment (2026-10-06)
 
+**Superseded for visibility and output validation by the October 10 update below.** The historical approval/deployment limitations still apply unless explicitly verified.
+
 The submission repository is private. GitHub rejected branch protection with HTTP 403 because the current account plan does not support it for private repositories. The owner chose to continue with sample-only demo validation, not to make the repository public.
 
 The approval gates below describe the intended deployment, not enforced controls in this demo. CODEOWNERS is present, but it does not enforce approval without branch protection. Azure credentials and deployment variables are not configured; no Azure deployment or automatic merge is authorized. Environment approval has not been configured or demonstrated.
 
 The owner registered the Copilot secret on October 6. The first run passed secret validation and deterministic preparation but failed on an unavailable model; the framework opened a failure Issue, not an impact finding. The retry with owner-selected `gpt-5.4` created six finding Issues, one grouping Issue and draft PR #9. Despite a successful Actions conclusion, report upload failed non-fatally because its staging artifact was missing. Generated Issue formatting and source links require correction, and the draft PR has no automatically triggered CI checks. Output validation is therefore incomplete. The service-change schedule remains off, and `.github/workflows/aw.json` disables generated maintenance. Do not claim end-to-end approval enforcement until the repository plan and review gates have been configured and tested.
+
+## Public reviewed demo (2026-10-10)
+
+The owner explicitly authorized making the existing repository public. Tracked history contains public Azure notices and synthetic data, not environment exports or credential values. `data/inventory/*.json` is ignored and public preparation/publication rejects non-sample inventory, Message Center and tenant-profile inputs. GitHub Pages publishes only the committed reviewed sample snapshot, not raw data, agent logs or unreviewed live reports.
+
+All 12 selected candidates were reviewed against public source conditions and the synthetic configuration. The six original finding Issues were reviewed; SMS primary sign-in was corrected from Impacted to Needs investigation, and the disk/ADE scope and malformed PowerShell finding were corrected. The report retains missing facts and coverage gaps rather than inventing safe defaults. Three Not impacted verdicts are explicitly limited to the captured VM series, Windows app or sample-resource inventory.
+
+Draft PR 9 has passing PR-linked CI and offline Bicep validation after an owner-origin empty commit. Its deployment job was skipped. Manual CI alone does not configure automatic CI for future bot-created pull requests; the scoped trigger-token option remains documented in setup.
+
+Report publication is deterministic and validates exact candidate coverage. The trusted publisher is copied before the agent runs, so post-steps do not execute agent-modified source. With gh-aw v0.81.6, its built-in staging upload precedes post-steps; the validated staging upload replaces that artifact afterward. `verify-report` fails if Markdown, HTML or candidate metadata was not delivered or does not match validation. An Actions green status without this check is insufficient.
+
+Approval enforcement is not demonstrated merely by changing visibility to public. Branch protection/environment approval has not been configured or tested in this task. No merge, Azure authentication, what-if, deployment or M365 setting change is authorized. Analysis schedules and generated maintenance remain off.
 
 ## Human decision points
 

@@ -4,7 +4,7 @@ From this folder to a first reviewed run. Steps 1-5 are enough for the demo; ste
 
 ## 1. Create the repository
 
-The submission repository is [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow) (private). Clone it to use that repository; the creation commands below are for a separate copy.
+The submission repository is [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow) (public, owner-authorized on 2026-10-10, synthetic data only). Clone it to use that repository; the creation commands below are for a separate copy.
 
 Start private. Make it public only after checking that no private data was committed; making a repository private again cannot retract copies already downloaded.
 
@@ -44,7 +44,7 @@ gh label create needs-human-approval --color FBCA04 --description "A person must
 - Protect `main`: require a pull request, one approval, review from code owners and the `ci` checks.
 - Create the environment **azure-verification** with required reviewers (Settings → Environments). `infra-deploy.yml` waits for this approval before deploying.
 
-For the current private demo, the branch-protection API returned HTTP 403 (a plan upgrade is required), and environment approval is not configured. Keep Azure authentication and deployment variables unset. CODEOWNERS alone is not an approval gate. Continue only with sample analysis and human-reviewed draft outputs; do not merge or deploy automatically. See [current governance status](governance.md#current-demo-deployment-2026-10-06).
+The October 6 private demo could not use branch protection (HTTP 403). The repository is now public, but branch protection and environment approval have not been configured/tested as part of output validation. Keep Azure authentication and deployment variables unset until those gates are deliberately configured and tested. CODEOWNERS alone is not an approval gate. See [current governance status](governance.md#public-reviewed-demo-2026-10-10).
 
 ## 4. First run
 
@@ -59,12 +59,23 @@ For a dry run first, set `staged: true` under `safe-outputs:` in `.github/workfl
 ## 5. Review the result
 
 - **Step summary**: the deterministic pre-match (counts, candidates, evidence hints, warnings).
-- **Artifact** `run/impact-report.md`: every verdict with evidence, plus what was not evaluated and why.
+- **Artifact** `report`: `run/report/impact-report.md`, `index.html` and `candidates.json`. Every candidate must have exactly one valid verdict; `verify-report` must pass, not just the agent/safe-output jobs.
+- **Pages**: [reviewed sample report](https://amex678.github.io/service-change-impact-workflow/). Enable Pages with Actions as its source. `pages.yml` renders only `docs/reports/` after sample-only validation. Public Pages never publishes a real-tenant report.
 - **Issues** titled `[service-change] Azure <id>: …` or `[service-change] M365 <id>: …`, grouped under a parent Issue.
 - **Draft pull request**, if an *Impacted* Azure notice maps to `infra/`.
 - Check the first run for the three items the local tests could not cover: engine authentication, the MRC MCP tools, and whether a run with no candidates is skipped before the AI starts (look for the no-op message and no "Execute GitHub Copilot CLI" time).
 
 Use `gh aw logs service-change-impact` and `gh aw audit <run-id>` to inspect runs.
+
+To review already tracked findings without duplicate Issues/PRs, run with `review_tracked=true`:
+
+```bash
+gh workflow run service-change-impact.lock.yml -f review_tracked=true
+```
+
+The existing Issue link stays in each candidate. The agent re-evaluates it in the report but must not create a duplicate Issue/PR. Normal runs still skip tracked notices.
+
+For an existing bot-created draft PR blocked as `action_required`, a repository owner can trigger `ci.yml` manually at its head branch, or push a reviewed empty commit using their own identity to obtain PR-linked checks. On October 10, PR 9 passed the latter path. Do not merge or deploy just to start CI. Automatic triggering for future generated PRs requires the scoped token above; do not repurpose the Copilot engine token.
 
 ## 6. Turn on the schedule
 
@@ -91,7 +102,7 @@ python scripts/sanitize_azure_inventory.py data/raw/resources.json data/raw/disk
   --output data/inventory/azure-inventory.json --name-map data/raw/name-map.json
 ```
 
-The workflow uses `data/inventory/azure-inventory.json` when it exists and the sample otherwise. The sanitized file has no identifiers or tags, but it still describes your environment. Commit it only to a private repository, and keep `data/raw/` (including the pseudonym map) out of git. Add properties that notices depend on to `config/inventory-properties.json`, and new resource types to `config/product-map.json` (tests check product names against `config/azure-updates-products.json`).
+The workflow uses `data/inventory/azure-inventory.json` when it exists and the sample otherwise. The sanitized file still describes your environment. This public demo ignores `data/inventory/*.json` and refuses real inputs in public workflow/report publication. Use a separately reviewed private copy for real data; do not force-add exports to this public repository. Keep `data/raw/` (including the pseudonym map) out of git.
 
 ## 8. Microsoft 365 data
 

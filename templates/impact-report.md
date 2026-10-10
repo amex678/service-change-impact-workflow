@@ -20,7 +20,12 @@ An incomplete fetch, a missing input or an unmapped resource type limits what th
 
 | Notice | Change and effective date | Matched resources or settings | Deciding evidence | Verdict | Next step |
 |---|---|---|---|---|---|
-| <Azure 572770: title> | <what changes, date stated by the notice> | <sites-01> | <notice condition vs. configuration value> | Impacted / Not impacted / Needs investigation / Cannot evaluate | <action or "none"> |
+| <Azure 572770: title, using the exact candidate key> | <what changes, date stated by the notice> | <sites-01 and explicitly checked scope> | <notice condition vs. configuration value, including missing deciding facts> | Impacted / Not impacted / Needs investigation / Cannot evaluate | <action or "none"> |
+
+Include every selected candidate exactly once. Detail headings must begin with
+`### Azure <id>:` or `### M365 <id>:`. Use real Markdown newlines; do not embed
+literal `\n` escapes. The trusted publisher replaces the scope/counts, source
+links and coverage lists with the deterministic candidate snapshot.
 
 ## 3. Details for Impacted and Needs investigation
 

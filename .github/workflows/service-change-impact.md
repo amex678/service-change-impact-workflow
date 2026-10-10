@@ -19,6 +19,11 @@ on:
         type: boolean
         required: false
         default: true
+      review_tracked:
+        description: "Re-evaluate tracked notices in the report without creating duplicate Issues or pull requests"
+        type: boolean
+        required: false
+        default: false
   # Enable only after reviewed manual runs (docs/setup.md, step 6):
   # schedule: daily
 
@@ -64,14 +69,22 @@ steps:
       GH_TOKEN: ${{ github.token }}
     run: |
       gh issue list --label service-change --state all --limit 500 --json number,title,state \
-        > run/existing-issues.json || echo '[]' > run/existing-issues.json
+        > run/existing-issues.json
   - name: Pre-match notices against the inventory (deterministic)
     env:
       INCLUDE_M365: ${{ github.event.inputs.include_m365 }}
+      REVIEW_TRACKED: ${{ github.event.inputs.review_tracked }}
+      REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
       # A noop written here lets the harness skip the AI run when nothing needs evaluation.
       GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
     run: |
       pick() { if [ -f "data/inventory/$1" ]; then echo "data/inventory/$1"; else echo "data/samples/$2"; fi; }
+      public_args=()
+      case "$REPOSITORY_VISIBILITY" in
+        public) public_args=(--public-output) ;;
+        private) ;;
+        *) echo "Repository visibility is unavailable; refusing to publish inputs." >&2; exit 1 ;;
+      esac
       python3 scripts/prepare_candidates.py \
         --azure-updates run/azure-updates.json \
         --azure-inventory "$(pick azure-inventory.json azure-inventory.sample.json)" \
@@ -79,9 +92,75 @@ steps:
         --m365-profile "$(pick m365-tenant-profile.json m365-tenant-profile.sample.json)" \
         --include-m365 "${INCLUDE_M365:-true}" \
         --existing-issues run/existing-issues.json \
+        --review-tracked "${REVIEW_TRACKED:-false}" \
+        "${public_args[@]}" \
         --output run/candidates.json \
         --summary "$GITHUB_STEP_SUMMARY" \
         --noop-file "$GH_AW_SAFE_OUTPUTS"
+  - name: Preserve the trusted report publisher and candidate snapshot
+    run: |
+      mkdir -p run/report
+      mkdir -p "$RUNNER_TEMP/gh-aw/report-publisher/scripts" "$RUNNER_TEMP/gh-aw/report-publisher/templates"
+      cp scripts/publish_report.py "$RUNNER_TEMP/gh-aw/report-publisher/scripts/"
+      cp templates/impact-report.html "$RUNNER_TEMP/gh-aw/report-publisher/templates/"
+      cp run/candidates.json "$RUNNER_TEMP/gh-aw/report-publisher/candidates.json"
+
+post-steps:
+  - name: Validate every verdict and stage the complete report
+    env:
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+    run: |
+      public_args=()
+      case "$REPOSITORY_VISIBILITY" in
+        public) public_args=(--public-output) ;;
+        private) ;;
+        *) echo "Repository visibility is unavailable; refusing to publish inputs." >&2; exit 1 ;;
+      esac
+      python3 "$RUNNER_TEMP/gh-aw/report-publisher/scripts/publish_report.py" \
+        --candidates "$RUNNER_TEMP/gh-aw/report-publisher/candidates.json" \
+        --report run/impact-report.md --output-dir run/report \
+        --stage-dir "$RUNNER_TEMP/gh-aw/safeoutputs/upload-artifacts/run/report" \
+        --run-url "$RUN_URL" "${public_args[@]}"
+  # gh-aw v0.81.6 uploads staging before post-steps; replace it after validation.
+  - name: Upload validated report staging
+    uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    with:
+      name: safe-outputs-upload-artifacts
+      path: ${{ runner.temp }}/gh-aw/safeoutputs/upload-artifacts/
+      retention-days: 1
+      if-no-files-found: error
+      overwrite: true
+
+jobs:
+  verify-report:
+    needs: [agent, safe_outputs]
+    if: ${{ !cancelled() && needs.agent.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Download the required report (missing artifact fails the run)
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: report
+          path: report-artifact
+      - name: Verify delivered files and every candidate verdict
+        env:
+          REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+        run: |
+          public_args=()
+          case "$REPOSITORY_VISIBILITY" in
+            public) public_args=(--public-output) ;;
+            private) ;;
+            *) echo "Repository visibility is unavailable; refusing to publish inputs." >&2; exit 1 ;;
+          esac
+          python3 scripts/publish_report.py --verify-directory report-artifact/run/report "${public_args[@]}"
 
 safe-outputs:
   allowed-domains: [default-safe-outputs, "azure.microsoft.com", "learn.microsoft.com", "www.microsoft.com"]
@@ -100,7 +179,7 @@ safe-outputs:
   upload-artifact:
     max-uploads: 1
     retention-days: 30
-    allowed-paths: ["run/**"]
+    allowed-paths: ["run/report", "run/report/**"]
 ---
 
 # Service-change impact analysis
@@ -135,10 +214,15 @@ Rules:
 4. Report `deferred` and `already_tracked` items as "not evaluated in this run" with their reason. Never describe them as not impacted.
 5. Respect the data boundary: refer to resources only by the names in the inventory (they are pseudonyms), and never output subscription, tenant or resource identifiers. For Microsoft 365, quote at most one short sentence from a notice; do not paste notice bodies.
 6. If `inputs.azure_inventory.sample` or `inputs.m365.sample` is true, say clearly in every output that the environment is a synthetic sample.
+7. Do not equate an enabled SMS authentication policy with SMS primary sign-in: `includeTargets[].isUsableForSignIn` is a separate deciding fact. A Disk Encryption Set is not evidence that Azure Disk Encryption is enabled.
+8. Scope a Not impacted verdict to captured facts. An application's `minTlsVersion` does not capture the SCM site's TLS setting or client compatibility. A region alone is not an explicit subscription cloud identifier. Missing deciding facts require Needs investigation, not an assumed default.
+9. A candidate with `tracking_issue` is a re-review of an existing finding. Evaluate it in the report and link that Issue, but do not create another Issue or pull request for it.
 
 ## What to produce
 
-1. **Report.** Write `run/impact-report.md` following `templates/impact-report.md`: scope and completeness, one row per candidate with its verdict and evidence, the "not evaluated" list, coverage gaps (`coverage.unmapped_types`), and warnings. Then call `upload_artifact` with `path: run/impact-report.md`.
+1. **Report.** Write `run/impact-report.md` following `templates/impact-report.md`. Section 2 must contain exactly one six-column row per candidate, with the exact candidate key, matched configuration or explicitly limited scope, deciding evidence, one of the four verdicts and a next step. Section 3 must include a heading with the exact key for every Impacted or Needs investigation row. Use actual newlines, never literal `\n` sequences, and retain the notice's original source URL.
+
+   The trusted post-step validates your rows, replaces scope/counts and coverage lists with the deterministic snapshot, generates HTML and stages all required files. Queue `upload_artifact` with `path: run/report` and do not set a custom artifact name (it must default to `report`); this directory is populated after you finish. Do not upload the draft Markdown directly or execute a report publisher yourself. Required output is Markdown, HTML and the candidate metadata; missing output now fails a separate verification job. Detail headings must begin with `### Azure <id>:` or `### M365 <id>:` without formatting around the key.
 
 2. **Issues.** Create one Issue per candidate whose verdict is **Impacted** or **Needs investigation**, highest urgency first. Use this exact title, so later runs can recognize it:
    - Azure: `Azure <notice id>: <notice title>`

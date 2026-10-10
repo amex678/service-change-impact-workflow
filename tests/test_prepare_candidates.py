@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 import tempfile
@@ -140,6 +141,25 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(result["candidates"], [])
         self.assertIn("informational", result["deferred"][0]["reason"])
 
+    def test_review_tracked_keeps_issue_link_and_does_not_write_noop(self):
+        updates = [azure_notice("572770", "Support for PowerShell 7.4 ends", ["Azure Functions"])]
+        issues = [{"number": 4, "title": "[service-change] Azure 572770: Support for PowerShell 7.4 ends", "state": "OPEN"}]
+        with Workspace(updates, [FUNCTION_APP], issues=issues) as ws:
+            result = ws.run("--review-tracked", "true")
+            self.assertFalse(ws.noop.exists())
+        self.assertEqual(result["candidates"][0]["tracking_issue"], {"issue": 4, "state": "OPEN"})
+        self.assertEqual(result["already_tracked"], [])
+        self.assertTrue(result["inputs"]["existing_issues"]["review_tracked"])
+
+    def test_review_tracked_still_respects_candidate_limit(self):
+        updates = [azure_notice(str(i), f"Retirement {i}", ["Azure Functions"]) for i in range(3)]
+        issues = [{"number": i + 1, "title": f"[service-change] Azure {i}: Retirement {i}"} for i in range(3)]
+        with Workspace(updates, [FUNCTION_APP], issues=issues) as ws:
+            result = ws.run("--review-tracked", "true", "--max-azure", "1")
+        self.assertEqual(len(result["candidates"]), 1)
+        self.assertEqual(len(result["deferred"]), 2)
+        self.assertEqual(result["already_tracked"], [])
+
     def test_overdue_retirement_is_flagged(self):
         updates = [azure_notice("1", "Old runtime retired", ["Azure Functions"], retire=(2026, "August"))]
         with Workspace(updates, [FUNCTION_APP]) as ws:
@@ -195,10 +215,40 @@ class NoopTests(unittest.TestCase):
 
 
 class SampleDataTests(unittest.TestCase):
+    def test_boolean_options_preserve_supported_values(self):
+        for value in ("true", "1", "YES"):
+            self.assertTrue(prep.parse_boolean(value))
+        for value in ("false", "0", "NO"):
+            self.assertFalse(prep.parse_boolean(value))
+
+    def test_invalid_boolean_is_rejected_instead_of_enabling_review(self):
+        with self.assertRaisesRegex(argparse.ArgumentTypeError, "Expected true or false"):
+            prep.parse_boolean("uncertain")
+
     def test_samples_are_marked_synthetic(self):
         for name in ("azure-inventory.sample.json", "m365-message-center.sample.json", "m365-tenant-profile.sample.json"):
             data = json.loads((ROOT / "data" / "samples" / name).read_text(encoding="utf-8"))
             self.assertIs(data.get("sample"), True, name)
+
+    def test_public_output_rejects_real_inventory(self):
+        with Workspace([], [FUNCTION_APP]) as ws:
+            with self.assertRaisesRegex(ValueError, "synthetic Azure inventory"):
+                ws.run("--public-output", "--include-m365", "false")
+
+    def test_public_output_rejects_real_notices_even_with_sample_profile(self):
+        with Workspace([], [], messages=[], profile={"sample": True, "services_in_use": []}) as ws:
+            ws._write("inventory", {"sample": True, "resources": []})
+            with self.assertRaisesRegex(ValueError, "synthetic Microsoft 365 notices"):
+                ws.run("--public-output")
+
+    def test_public_output_accepts_only_all_sample_inputs(self):
+        with Workspace([], []) as ws:
+            ws._write("inventory", {"sample": True, "resources": []})
+            ws._write("messages", {"sample": True, "messages": []})
+            ws._write("profile", {"sample": True, "services_in_use": []})
+            result = ws.run("--public-output")
+        self.assertTrue(result["inputs"]["m365"]["notices_sample"])
+        self.assertTrue(result["inputs"]["m365"]["profile_sample"])
 
 
 if __name__ == "__main__":

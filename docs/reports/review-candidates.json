@@ -1,0 +1,1289 @@
+{
+  "generated_at": "2026-10-10T00:58:21Z",
+  "inputs": {
+    "azure_updates": {
+      "count": 211,
+      "complete": true,
+      "error": null,
+      "since": "2026-09-26T00:36:12Z",
+      "windows": [
+        {
+          "window": "recent",
+          "filter": "modified ge 2026-09-26T00:36:12Z",
+          "reported_total": 62,
+          "unique_items": 62,
+          "pages": 1,
+          "duplicates_dropped": 0,
+          "complete": true,
+          "kept": 62
+        },
+        {
+          "window": "active-retirement",
+          "filter": "availabilities/any(a: a/ring eq 'Retirement' and a/year ge 2026)",
+          "reported_total": 206,
+          "unique_items": 206,
+          "pages": 3,
+          "duplicates_dropped": 0,
+          "complete": true,
+          "kept": 165
+        }
+      ]
+    },
+    "azure_inventory": {
+      "sample": true,
+      "captured_at": "2026-10-01T00:00:00Z",
+      "scope": "sample subscription (synthetic)"
+    },
+    "m365": {
+      "included": true,
+      "sample": true,
+      "notices_sample": true,
+      "profile_sample": true,
+      "captured_at": "2026-10-01T00:00:00Z",
+      "count": 4
+    },
+    "existing_issues": {
+      "tracked": 6,
+      "review_tracked": true
+    }
+  },
+  "coverage": {
+    "resources_total": 12,
+    "resources_mapped": 10,
+    "ignored_types": {
+      "microsoft.managedidentity/userassignedidentities": 1
+    },
+    "unmapped_types": {
+      "microsoft.purview/accounts": 1
+    }
+  },
+  "limits": {
+    "max_azure": 10,
+    "max_m365": 5
+  },
+  "counts": {
+    "candidates": 12,
+    "deferred": 41,
+    "already_tracked": 0,
+    "out_of_scope": {
+      "azure": 161,
+      "m365": 1
+    }
+  },
+  "warnings": [
+    "Some inventory resource types are not mapped to Azure Updates products and were not evaluated.",
+    "Some candidates exceeded the per-run limit and were not evaluated in this run.",
+    "The Azure inventory is a synthetic sample, not a real environment.",
+    "The Microsoft 365 notices and tenant profile are synthetic samples."
+  ],
+  "candidates": [
+    {
+      "key": "Azure 500157",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement",
+        "deadline_hint": "2028-09",
+        "months_until_deadline": 23
+      },
+      "evidence_score": 5,
+      "evidence_hints": [
+        {
+          "phrase": "premium ssd",
+          "weight": 2,
+          "from": [
+            "disks-03"
+          ]
+        },
+        {
+          "phrase": "standard hdd",
+          "weight": 2,
+          "from": [
+            "disks-01",
+            "disks-02"
+          ]
+        },
+        {
+          "phrase": "os disk",
+          "weight": 1,
+          "from": [
+            "disks-01",
+            "disks-03"
+          ]
+        }
+      ],
+      "matched_products": [
+        "Azure Disk Storage"
+      ],
+      "matched_resources": [
+        {
+          "name": "disks-01",
+          "resource_group": "rg-02",
+          "type": "microsoft.compute/disks",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "Standard_LRS",
+            "tier": "Standard"
+          },
+          "properties": {
+            "diskSizeGB": 127,
+            "osType": "Windows",
+            "diskState": "Attached"
+          }
+        },
+        {
+          "name": "disks-02",
+          "resource_group": "rg-02",
+          "type": "microsoft.compute/disks",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "Standard_LRS",
+            "tier": "Standard"
+          },
+          "properties": {
+            "diskSizeGB": 1024,
+            "diskState": "Attached"
+          }
+        },
+        {
+          "name": "disks-03",
+          "resource_group": "rg-03",
+          "type": "microsoft.compute/disks",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "Premium_LRS",
+            "tier": "Premium"
+          },
+          "properties": {
+            "diskSizeGB": 256,
+            "osType": "Linux",
+            "diskState": "Unattached"
+          }
+        }
+      ],
+      "notice": {
+        "id": "500157",
+        "title": "Retirement: Operating System (OS) Disks on Standard HDD will be retired on 08 September 2028",
+        "url": "https://azure.microsoft.com/updates?id=500157",
+        "products": [
+          "Azure Disk Storage"
+        ],
+        "product_categories": [
+          "Storage"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2025-09-08T21:00:36.2978872Z",
+        "modified": "2025-09-08T21:00:36.2978872Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2028,
+            "month": "September"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 7,
+        "state": "OPEN"
+      }
+    },
+    {
+      "key": "Azure 572770",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement",
+        "deadline_hint": "2026-11",
+        "months_until_deadline": 1
+      },
+      "evidence_score": 3,
+      "evidence_hints": [
+        {
+          "phrase": "powershell 7.4",
+          "weight": 2,
+          "from": [
+            "sites-01"
+          ]
+        },
+        {
+          "phrase": "powershell",
+          "weight": 1,
+          "from": [
+            "sites-01"
+          ]
+        }
+      ],
+      "matched_products": [
+        "Azure Functions"
+      ],
+      "matched_resources": [
+        {
+          "name": "sites-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/sites",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "siteConfig.powerShellVersion": "7.4",
+            "siteConfig.minTlsVersion": "1.2",
+            "reserved": false,
+            "httpsOnly": true
+          },
+          "iac": "infra/main.bicep (resource functionApp)"
+        },
+        {
+          "name": "serverfarms-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/serverfarms",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": {
+            "name": "Y1",
+            "tier": "Dynamic"
+          },
+          "properties": {
+            "reserved": false
+          },
+          "iac": "infra/main.bicep (resource hostingPlan)"
+        }
+      ],
+      "notice": {
+        "id": "572770",
+        "title": "Retirement: Support for PowerShell 7.4 ends on November 10, 2026",
+        "url": "https://azure.microsoft.com/updates?id=572770",
+        "products": [
+          "Azure Functions"
+        ],
+        "product_categories": [
+          "Compute",
+          "Containers",
+          "Internet of Things"
+        ],
+        "tags": [
+          "Retirements",
+          "Compliance",
+          "Security"
+        ],
+        "status": null,
+        "created": "2026-09-23T16:50:05.5913061Z",
+        "modified": "2026-09-23T16:50:05.5913061Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "November"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 4,
+        "state": "OPEN"
+      }
+    },
+    {
+      "key": "Azure 557852",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement",
+        "deadline_hint": "2027-05",
+        "months_until_deadline": 7
+      },
+      "evidence_score": 3,
+      "evidence_hints": [
+        {
+          "phrase": "tls 1.2",
+          "weight": 2,
+          "from": [
+            "sites-01"
+          ]
+        },
+        {
+          "phrase": "tls",
+          "weight": 1,
+          "from": [
+            "sites-01"
+          ]
+        }
+      ],
+      "matched_products": [
+        "App Service",
+        "Azure Functions"
+      ],
+      "matched_resources": [
+        {
+          "name": "sites-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/sites",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "siteConfig.powerShellVersion": "7.4",
+            "siteConfig.minTlsVersion": "1.2",
+            "reserved": false,
+            "httpsOnly": true
+          },
+          "iac": "infra/main.bicep (resource functionApp)"
+        },
+        {
+          "name": "serverfarms-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/serverfarms",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": {
+            "name": "Y1",
+            "tier": "Dynamic"
+          },
+          "properties": {
+            "reserved": false
+          },
+          "iac": "infra/main.bicep (resource hostingPlan)"
+        }
+      ],
+      "notice": {
+        "id": "557852",
+        "title": "Retirement:  TLS 1.0 and TLS 1.1 in Azure App Service, Azure Functions, and Azure Logic Apps",
+        "url": "https://azure.microsoft.com/updates?id=557852",
+        "products": [
+          "App Service",
+          "Azure Functions",
+          "Logic Apps"
+        ],
+        "product_categories": [
+          "Compute",
+          "Mobile",
+          "Web",
+          "Containers",
+          "Internet of Things",
+          "Integration"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2026-05-21T21:45:32.2389902Z",
+        "modified": "2026-05-21T21:45:32.2389902Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2027,
+            "month": "May"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "M365 MC-SAMPLE-001",
+      "source": "m365",
+      "scope": "tenant",
+      "signal": {
+        "level": "high",
+        "reason": "action required or major change",
+        "deadline_hint": "2026-12-01",
+        "months_until_deadline": 2
+      },
+      "evidence_score": 2,
+      "evidence_hints": [
+        {
+          "phrase": "authentication methods",
+          "weight": 1,
+          "from": [
+            "tenant settings"
+          ]
+        },
+        {
+          "phrase": "sms",
+          "weight": 1,
+          "from": [
+            "tenant settings"
+          ]
+        }
+      ],
+      "matched_services": [
+        "Microsoft Entra"
+      ],
+      "tenant_settings": {
+        "entra.authenticationMethods.sms": {
+          "value": "enabled for all users",
+          "source": "sample (Graph authenticationMethodsPolicy in a real tenant)"
+        },
+        "teams.meetingRecap": {
+          "value": "default",
+          "source": "sample"
+        }
+      },
+      "notice": {
+        "id": "MC-SAMPLE-001",
+        "title": "[SAMPLE] Authentication methods: SMS sign-in will require a policy update",
+        "services": [
+          "Microsoft Entra"
+        ],
+        "category": "planForChange",
+        "severity": "high",
+        "isMajorChange": true,
+        "startDateTime": "2026-09-15T00:00:00Z",
+        "lastModifiedDateTime": "2026-09-25T00:00:00Z",
+        "actionRequiredByDateTime": "2026-12-01T00:00:00Z",
+        "tags": [
+          "Admin impact",
+          "User impact"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 5,
+        "state": "OPEN"
+      }
+    },
+    {
+      "key": "Azure 493779",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement",
+        "deadline_hint": "2028-09",
+        "months_until_deadline": 23
+      },
+      "evidence_score": 1,
+      "evidence_hints": [
+        {
+          "phrase": "os disk",
+          "weight": 1,
+          "from": [
+            "virtualmachines-01"
+          ]
+        }
+      ],
+      "matched_products": [
+        "Virtual Machines"
+      ],
+      "matched_resources": [
+        {
+          "name": "virtualmachines-01",
+          "resource_group": "rg-02",
+          "type": "microsoft.compute/virtualmachines",
+          "kind": null,
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "hardwareProfile.vmSize": "Standard_D2s_v5",
+            "storageProfile.osDisk.osType": "Windows",
+            "storageProfile.osDisk.managedDisk.storageAccountType": "Standard_LRS",
+            "storageProfile.imageReference.offer": "WindowsServer",
+            "storageProfile.imageReference.sku": "2022-datacenter-azure-edition"
+          }
+        }
+      ],
+      "notice": {
+        "id": "493779",
+        "title": "Retirement: Azure Disk Encryption",
+        "url": "https://azure.microsoft.com/updates?id=493779",
+        "products": [
+          "Virtual Machine Scale Sets",
+          "Virtual Machines"
+        ],
+        "product_categories": [
+          "Compute"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2025-09-24T11:45:14.6965458Z",
+        "modified": "2025-09-24T11:45:14.6965458Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2028,
+            "month": "September"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 8,
+        "state": "OPEN"
+      }
+    },
+    {
+      "key": "Azure 551523",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-07",
+        "months_until_deadline": -3
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Azure Monitor"
+      ],
+      "matched_resources": [
+        {
+          "name": "components-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.insights/components",
+          "kind": "web",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "IngestionMode": "LogAnalytics",
+            "Flow_Type": "Bluefield"
+          },
+          "iac": "infra/main.bicep (resource appInsights)"
+        },
+        {
+          "name": "workspaces-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.operationalinsights/workspaces",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "PerGB2018"
+          },
+          "properties": {},
+          "iac": "infra/main.bicep (resource logAnalytics)"
+        }
+      ],
+      "notice": {
+        "id": "551523",
+        "title": "Retirement: \"Send data to Event Hubs & Storage (Preview)\" retiring July 31, 2026",
+        "url": "https://azure.microsoft.com/updates?id=551523",
+        "products": [
+          "Azure Monitor"
+        ],
+        "product_categories": [
+          "DevOps",
+          "Management and governance"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2026-01-30T18:30:02.6205929Z",
+        "modified": "2026-01-30T18:30:02.6205929Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "July"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "Azure 560948",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-07",
+        "months_until_deadline": -3
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Virtual Machines"
+      ],
+      "matched_resources": [
+        {
+          "name": "virtualmachines-01",
+          "resource_group": "rg-02",
+          "type": "microsoft.compute/virtualmachines",
+          "kind": null,
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "hardwareProfile.vmSize": "Standard_D2s_v5",
+            "storageProfile.osDisk.osType": "Windows",
+            "storageProfile.osDisk.managedDisk.storageAccountType": "Standard_LRS",
+            "storageProfile.imageReference.offer": "WindowsServer",
+            "storageProfile.imageReference.sku": "2022-datacenter-azure-edition"
+          }
+        }
+      ],
+      "notice": {
+        "id": "560948",
+        "title": "Retirement: Azure Reserved Virtual Machines Instances for select VM series",
+        "url": "https://azure.microsoft.com/updates?id=560948",
+        "products": [
+          "Virtual Machines"
+        ],
+        "product_categories": [
+          "Compute"
+        ],
+        "tags": [
+          "Retirements",
+          "Pricing & Offerings"
+        ],
+        "status": null,
+        "created": "2026-05-05T20:00:13.4947532Z",
+        "modified": "2026-05-05T20:00:13.4947532Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "July"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "Azure 498749",
+      "source": "azure",
+      "scope": "subscription",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-08",
+        "months_until_deadline": -2
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Microsoft Defender for Cloud"
+      ],
+      "matched_resources": [],
+      "notice": {
+        "id": "498749",
+        "title": "Retirement: Microsoft Defender for Cloud Deprecation in Microsoft Azure Operated by 21Vianet Announcement",
+        "url": "https://azure.microsoft.com/updates?id=498749",
+        "products": [
+          "Microsoft Defender for Cloud"
+        ],
+        "product_categories": [
+          "Hybrid + multicloud",
+          "Security"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2025-08-20T16:30:32.3883784Z",
+        "modified": "2025-08-20T16:30:32.3883784Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "August"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "Azure azure-monitor-data-collection-api-retirement",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-09",
+        "months_until_deadline": -1
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Azure Monitor"
+      ],
+      "matched_resources": [
+        {
+          "name": "components-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.insights/components",
+          "kind": "web",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "IngestionMode": "LogAnalytics",
+            "Flow_Type": "Bluefield"
+          },
+          "iac": "infra/main.bicep (resource appInsights)"
+        },
+        {
+          "name": "workspaces-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.operationalinsights/workspaces",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "PerGB2018"
+          },
+          "properties": {},
+          "iac": "infra/main.bicep (resource logAnalytics)"
+        }
+      ],
+      "notice": {
+        "id": "azure-monitor-data-collection-api-retirement",
+        "title": "Azure Monitor Data Collection API Retirement",
+        "url": "https://azure.microsoft.com/updates?id=azure-monitor-data-collection-api-retirement",
+        "products": [
+          "Azure Monitor"
+        ],
+        "product_categories": [
+          "DevOps",
+          "Management and governance"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2023-09-22T23:00:57.0000000Z",
+        "modified": "2023-09-22T23:00:57.0000000Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "September"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 2,
+        "state": "OPEN"
+      }
+    },
+    {
+      "key": "Azure 559311",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-09",
+        "months_until_deadline": -1
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Azure Functions"
+      ],
+      "matched_resources": [
+        {
+          "name": "sites-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/sites",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "siteConfig.powerShellVersion": "7.4",
+            "siteConfig.minTlsVersion": "1.2",
+            "reserved": false,
+            "httpsOnly": true
+          },
+          "iac": "infra/main.bicep (resource functionApp)"
+        },
+        {
+          "name": "serverfarms-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.web/serverfarms",
+          "kind": "functionapp",
+          "location": "japaneast",
+          "sku": {
+            "name": "Y1",
+            "tier": "Dynamic"
+          },
+          "properties": {
+            "reserved": false
+          },
+          "iac": "infra/main.bicep (resource hostingPlan)"
+        }
+      ],
+      "notice": {
+        "id": "559311",
+        "title": "Retirement: Azure Functions runtime v3 on Linux Consumption will stop running September 30, 2026",
+        "url": "https://azure.microsoft.com/updates?id=559311",
+        "products": [
+          "Azure Functions"
+        ],
+        "product_categories": [
+          "Compute",
+          "Containers",
+          "Internet of Things"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2026-04-17T19:00:12.8775967Z",
+        "modified": "2026-04-17T19:00:12.8775967Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "September"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "Azure 501673",
+      "source": "azure",
+      "scope": "resource",
+      "signal": {
+        "level": "high",
+        "reason": "retirement date has passed; confirm nothing still depends on it",
+        "deadline_hint": "2026-09",
+        "months_until_deadline": -1
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_products": [
+        "Azure Monitor"
+      ],
+      "matched_resources": [
+        {
+          "name": "components-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.insights/components",
+          "kind": "web",
+          "location": "japaneast",
+          "sku": null,
+          "properties": {
+            "IngestionMode": "LogAnalytics",
+            "Flow_Type": "Bluefield"
+          },
+          "iac": "infra/main.bicep (resource appInsights)"
+        },
+        {
+          "name": "workspaces-01",
+          "resource_group": "rg-01",
+          "type": "microsoft.operationalinsights/workspaces",
+          "kind": null,
+          "location": "japaneast",
+          "sku": {
+            "name": "PerGB2018"
+          },
+          "properties": {},
+          "iac": "infra/main.bicep (resource logAnalytics)"
+        }
+      ],
+      "notice": {
+        "id": "501673",
+        "title": "Retirement: Azure Monitor SCOM Managed Instance will be retired on Sep 30, 2026",
+        "url": "https://azure.microsoft.com/updates?id=501673",
+        "products": [
+          "Azure Monitor"
+        ],
+        "product_categories": [
+          "DevOps",
+          "Management and governance"
+        ],
+        "tags": [
+          "Retirements"
+        ],
+        "status": null,
+        "created": "2025-10-03T18:15:20.4239852Z",
+        "modified": "2025-10-03T18:15:20.4239852Z",
+        "general_availability": null,
+        "preview_availability": null,
+        "availabilities": [
+          {
+            "ring": "Retirement",
+            "year": 2026,
+            "month": "September"
+          }
+        ],
+        "windows": [
+          "active-retirement"
+        ]
+      }
+    },
+    {
+      "key": "M365 MC-SAMPLE-002",
+      "source": "m365",
+      "scope": "tenant",
+      "signal": {
+        "level": "medium",
+        "reason": "category planForChange",
+        "deadline_hint": null,
+        "months_until_deadline": null
+      },
+      "evidence_score": 0,
+      "evidence_hints": [],
+      "matched_services": [
+        "Exchange Online"
+      ],
+      "tenant_settings": {
+        "entra.authenticationMethods.sms": {
+          "value": "enabled for all users",
+          "source": "sample (Graph authenticationMethodsPolicy in a real tenant)"
+        },
+        "teams.meetingRecap": {
+          "value": "default",
+          "source": "sample"
+        }
+      },
+      "notice": {
+        "id": "MC-SAMPLE-002",
+        "title": "[SAMPLE] Exchange Online: a legacy mailbox access protocol will be turned off",
+        "services": [
+          "Exchange Online"
+        ],
+        "category": "planForChange",
+        "severity": "normal",
+        "isMajorChange": false,
+        "startDateTime": "2026-09-20T00:00:00Z",
+        "lastModifiedDateTime": "2026-09-28T00:00:00Z",
+        "actionRequiredByDateTime": null,
+        "tags": [
+          "Admin impact"
+        ]
+      },
+      "tracking_issue": {
+        "issue": 6,
+        "state": "OPEN"
+      }
+    }
+  ],
+  "deferred": [
+    {
+      "key": "Azure 500853",
+      "title": "Retirement: Legacy Authentication in Azure Monitor - Container Insights will be retired on September 30, 2026.",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 573414",
+      "title": "Retirement: NVv3-series Azure Virtual Machines",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 573415",
+      "title": "Retirement: NVv4-series Azure Virtual Machines",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 568661",
+      "title": "Retirement: Nested confidential (cc_v5) VMs will be retired on September 1, 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure transition-to-azure-ad-to-query-data-from-azure-monitor-application-insights-by-31-march-2026",
+      "title": "Retirement: Transition to Entra ID (formerly known as Azure AD) to query data from Azure Monitor application insights by September 30, 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 498563",
+      "title": "Retirement: Upgrade BlobFuse v1 to latest version of Blobfuse v2",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure support-for-the-1x-version-of-azure-functions-ends-14-september-2026",
+      "title": "Support for the 1.x version of Azure Functions ends 14 September 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure transition-to-the-containerlogv2-table-by-30-september-2026",
+      "title": "Transition to the ContainerLogV2 table by 30 September 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 513892",
+      "title": "Retirement: Deprecation of Custom Resource Providers",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 564441",
+      "title": "Retirement: GPv1 and Legacy Blob storage account creation",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 496964",
+      "title": "Retirement: General Purpose v1 (GPv1) and legacy blob storage accounts",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 545771",
+      "title": "Retirement: Support for Python 3.10 ends on October 1, 2026 – upgrade your Azure Functions apps to Python 3.13",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 509686",
+      "title": "Retirement: Support for Python 3.10 ends on October 1st, 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 558033",
+      "title": "Retirement: Support for .NET 8 (LTS) ends on November 10, 2026—upgrade your apps to .NET 10 (LTS)",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 572838",
+      "title": "Retirement: Support for .NET 8 and .NET 9 ends on November 10, 2026—upgrade your apps to .NET 10",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 485077",
+      "title": "Retirement: Support for .NET 9 (STS) ends on November 10, 2026",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure retirement-support-for-the-inprocess-model-for-net-apps-in-azure-functions-ends-10-november-2026",
+      "title": "Retirement: Support for the in-process model for .NET apps in Azure Functions ends 10 November 2026.",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure php-82-app-svc",
+      "title": "Retirement: Extended support for PHP 8.2 ends December 31st, 2026 – upgrade apps to PHP 8.3",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 558276",
+      "title": "Retirement: AzureDnsEndpoints for Azure storage accounts will be retired March 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 550519",
+      "title": "Retirement: Deprecation of sidecar for remote-write for Azure Monitor managed service for Prometheus",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 558027",
+      "title": "Retirement: Python support for Azure App Service and Azure Functions on Windows will be retired on March 31, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 567334",
+      "title": "Retirement: Support for Node 22 LTS ends on April 30, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 572771",
+      "title": "Retirement: Support for Node.js 22 ends on April 30, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 548525",
+      "title": "Retirement: HBv2-series Azure Virtual Machines will be retired on May 31, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 548543",
+      "title": "Retirement: HC-series Azure Virtual Machines will be retired on May 31, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 548497",
+      "title": "Retirement: NP-series Azure Virtual Machines will be retired on May 31, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 568585",
+      "title": "Retirement: Support for Java 8, 11 and 17 will end on September 1, 2027",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 485047",
+      "title": "Retirement: Azure App Service Will No Longer Support Linked Databases as a Part of Custom Backups After March 31, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 489009",
+      "title": "Retirement: Azure Functions – Durable Functions support for Netherite will end on March 31, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 486080",
+      "title": "Retirement: Log Analytics Batch API to Be Retired on March 31, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 485569",
+      "title": "Retirement: D, Ds, Dv2, Dsv2, and Ls Series Virtual Machines to Be Retired on May 1, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 491629",
+      "title": "Retirement: VM Insights Map and Dependency Agent are being on June 30, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 499451",
+      "title": "Retirement: The Linux Consumption hosting plan of Azure Functions will be retired on September 30, 2028. Migrate to Flex Consumption.",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure transition-to-using-standard-tests-for-singlestep-availability-testing-in-azure-monitor-application-insights-by-30-september",
+      "title": "Retirement: Transition to using standard tests for single-step availability testing in Azure Monitor application insights by September 30, 2028",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 494676",
+      "title": "Retirement: hsmPlatform 1 Keys in Azure Key Vault",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 568178",
+      "title": "Retirement: Azure App Service on Azure Stack Hub",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 569592",
+      "title": "Retirement: DCsv3 and DCdsv3-series Azure Virtual Machines will be retired on October 31, 2029",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 572346",
+      "title": "Retirement: Dv3, Dsv3, Ev3, and Esv3 Azure VMs",
+      "signal": "high",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "Azure 572630",
+      "title": "Generally Available: Storage optimized Lasv5 and Laosv5 Azure VM series",
+      "signal": "medium",
+      "evidence_score": 0,
+      "reason": "over the per-run limit of 10 azure candidates"
+    },
+    {
+      "key": "M365 MC-SAMPLE-003",
+      "title": "[SAMPLE] Microsoft Teams: updated layout for meeting recap",
+      "signal": "low",
+      "evidence_score": 2,
+      "reason": "informational (stay informed)"
+    },
+    {
+      "key": "Azure 571075",
+      "title": "Public Preview: Automatic Zone Placement for Virtual Machine Scale Sets",
+      "signal": "low",
+      "evidence_score": 0,
+      "reason": "informational (feature, preview, region or service update)"
+    }
+  ],
+  "already_tracked": [],
+  "report_run_url": null
+}

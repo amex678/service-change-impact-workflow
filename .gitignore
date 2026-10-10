@@ -11,3 +11,6 @@ run/
 
 # Raw Azure/M365 exports and pseudonym maps: never commit
 data/raw/
+
+# This public demo must not accidentally track environment exports.
+data/inventory/*.json

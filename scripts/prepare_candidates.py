@@ -305,6 +305,12 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
     profile = load_json(args.m365_profile) if args.include_m365 else None
     tracked = tracked_keys(load_json(args.existing_issues, []))
 
+    if args.public_output:
+        if not inventory.get("sample"):
+            raise ValueError("Public output requires a synthetic Azure inventory.")
+        if args.include_m365 and not (messages and messages.get("sample") and profile and profile.get("sample")):
+            raise ValueError("Public output requires synthetic Microsoft 365 notices and a synthetic profile.")
+
     resources, coverage = index_inventory(inventory, product_map)
     azure, azure_out = match_azure(updates, resources, product_map, hints, as_of)
     m365, m365_out = match_m365(messages, profile, as_of)
@@ -316,14 +322,14 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
         brief = {"key": item["key"], "title": item["notice"].get("title"), "signal": item["signal"]["level"],
                  "evidence_score": item["evidence_score"]}
         source = item["source"]
-        if item["key"] in tracked:
+        if item["key"] in tracked and not args.review_tracked:
             already.append({**brief, **tracked[item["key"]]})
         elif item["signal"]["level"] == "low":
             deferred.append({**brief, "reason": item["signal"]["reason"]})
         elif taken[source] >= limits[source]:
             deferred.append({**brief, "reason": f"over the per-run limit of {limits[source]} {source} candidates"})
         else:
-            candidates.append(item)
+            candidates.append({**item, "tracking_issue": tracked[item["key"]]} if item["key"] in tracked else item)
             taken[source] += 1
 
     warnings = []
@@ -337,8 +343,10 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
         warnings.append("Some candidates exceeded the per-run limit and were not evaluated in this run.")
     if inventory.get("sample"):
         warnings.append("The Azure inventory is a synthetic sample, not a real environment.")
-    if profile and profile.get("sample"):
+    if messages and messages.get("sample") and profile and profile.get("sample"):
         warnings.append("The Microsoft 365 notices and tenant profile are synthetic samples.")
+    elif (messages and messages.get("sample")) or (profile and profile.get("sample")):
+        warnings.append("Only some Microsoft 365 inputs are synthetic; notice and profile sample flags differ.")
 
     return {
         "generated_at": as_of.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -351,9 +359,13 @@ def build(args: argparse.Namespace, as_of: datetime) -> dict:
             "m365": {"included": bool(messages and profile),
                      "notices_path": args.m365_notices if args.include_m365 else None,
                      "profile_path": args.m365_profile if args.include_m365 else None,
-                     "sample": bool(profile and profile.get("sample")),
+                     "sample": bool((messages and messages.get("sample")) or (profile and profile.get("sample"))),
+                     "notices_sample": bool(messages and messages.get("sample")),
+                     "profile_sample": bool(profile and profile.get("sample")),
+                     "captured_at": profile.get("captured_at") if profile else None,
                      "count": len((messages or {}).get("messages", []))},
-            "existing_issues": {"path": args.existing_issues, "tracked": len(tracked)},
+            "existing_issues": {"path": args.existing_issues, "tracked": len(tracked),
+                                "review_tracked": args.review_tracked},
         },
         "coverage": coverage,
         "limits": {"max_azure": args.max_azure, "max_m365": args.max_m365},
@@ -403,6 +415,15 @@ def summary_markdown(result: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_boolean(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"true", "1", "yes"}:
+        return True
+    if normalized in {"false", "0", "no"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected true or false, got {value!r}.")
+
+
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--azure-updates", required=True)
@@ -411,9 +432,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--evidence-hints", default="config/evidence-hints.json")
     parser.add_argument("--m365-notices")
     parser.add_argument("--m365-profile")
-    parser.add_argument("--include-m365", default="true",
-                        type=lambda value: str(value).strip().lower() not in {"false", "0", "no"})
+    parser.add_argument("--include-m365", default="true", type=parse_boolean)
     parser.add_argument("--existing-issues")
+    parser.add_argument("--review-tracked", default="false", type=parse_boolean,
+                        help="Re-evaluate tracked notices without requesting duplicate Issues or pull requests")
+    parser.add_argument("--public-output", action="store_true",
+                        help="Reject real environment or tenant inputs before producing public output")
     parser.add_argument("--max-azure", type=int, default=10, help="Azure candidates evaluated per run")
     parser.add_argument("--max-m365", type=int, default=5, help="Microsoft 365 candidates evaluated per run")
     parser.add_argument("--output", required=True)
