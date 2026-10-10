@@ -174,7 +174,7 @@ def canonical_report(candidates: dict, draft: str, run_url: str | None = None,
 
 
 def inline_markdown(text: str) -> str:
-    tokens = re.compile(r"`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*")
+    tokens = re.compile(r"`([^`]+)`|\[((?:[^\[\]\n]|\[[^\[\]\n]*\])+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*")
     pieces: list[str] = []
     end = 0
     for match in tokens.finditer(text):

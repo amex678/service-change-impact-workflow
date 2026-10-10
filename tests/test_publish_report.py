@@ -183,6 +183,10 @@ class PublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unsafe"):
             report.inline_markdown("[source](javascript:alert)")
 
+    def test_sample_title_brackets_preserve_the_clickable_source(self):
+        value = report.inline_markdown("[M365 MC-SAMPLE-001: [SAMPLE] SMS](https://github.com/amex678/example)")
+        self.assertEqual(value, '<a href="https://github.com/amex678/example">M365 MC-SAMPLE-001: [SAMPLE] SMS</a>')
+
     def test_wrong_notice_source_is_rejected(self):
         data = candidates()
         data["candidates"][0]["notice"]["url"] = "https://azure.microsoft.com/updates?id=999"
