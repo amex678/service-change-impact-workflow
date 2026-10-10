@@ -122,13 +122,23 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(by_key["M365 MC-SAMPLE-001"], "Needs investigation")
         self.assertEqual(by_key["Azure 557852"], "Needs investigation")
         self.assertEqual(sum(value == "Impacted" for value in by_key.values()), 2)
-        self.assertEqual(sum(value == "Not impacted" for value in by_key.values()), 3)
-        self.assertEqual(sum(value == "Needs investigation" for value in by_key.values()), 7)
+        self.assertEqual(by_key["Azure 560948"], "Needs investigation")
+        self.assertEqual(sum(value == "Not impacted" for value in by_key.values()), 2)
+        self.assertEqual(sum(value == "Needs investigation" for value in by_key.values()), 8)
 
     def test_real_message_without_url_does_not_link_to_a_fictional_notice(self):
         candidate = candidates()["candidates"][1]
         self.assertIsNone(report.notice_url(candidate))
         self.assertEqual(report.notice_url(candidate, True), report.SAMPLE_URL)
+
+    def test_reviewed_publication_retains_the_original_workflow_run(self):
+        data = candidates()
+        data["report_run_url"] = "https://github.com/amex678/service-change-impact-workflow/actions/runs/38012531004"
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary)
+            report.publish(data, DRAFT, output)
+            self.assertIn(data["report_run_url"], (output / "impact-report.md").read_text(encoding="utf-8"))
+            self.assertEqual(report.verify(output), 2)
 
     def test_mixed_samples_are_not_mislabelled_as_an_all_sample_environment(self):
         data = candidates()

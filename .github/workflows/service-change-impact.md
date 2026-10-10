@@ -217,6 +217,7 @@ Rules:
 7. Do not equate an enabled SMS authentication policy with SMS primary sign-in: `includeTargets[].isUsableForSignIn` is a separate deciding fact. A Disk Encryption Set is not evidence that Azure Disk Encryption is enabled.
 8. Scope a Not impacted verdict to captured facts. An application's `minTlsVersion` does not capture the SCM site's TLS setting or client compatibility. A region alone is not an explicit subscription cloud identifier. Missing deciding facts require Needs investigation, not an assumed default.
 9. A candidate with `tracking_issue` is a re-review of an existing finding. Evaluate it in the report and link that Issue, but do not create another Issue or pull request for it.
+10. Do not label a disk as a data disk just because `osType` is missing. Keep its OS/data role unknown until captured. Reservations require reservation-order evidence: a current VM series can be excluded without proving that the account has no other affected reservations.
 
 ## What to produce
 

@@ -7,9 +7,9 @@
 
 | Item | Value |
 |---|---|
-| Input snapshot | 2026-10-10T00:58:21Z |
-| Run | Reviewed local replay; not a workflow or live-environment test |
-| Azure Updates | 211 notices; complete; recent since 2026-09-26T00:36:12Z plus active retirements |
+| Input snapshot | 2026-10-10T01:16:54Z |
+| Run | https://github.com/amex678/service-change-impact-workflow/actions/runs/38012531004 |
+| Azure Updates | 211 notices; complete; recent since 2026-09-26T01:16:52Z plus active retirements |
 | Azure inventory | sample subscription (synthetic); captured 2026-10-01T00:00:00Z; 10/12 resources mapped; SYNTHETIC SAMPLE |
 | Microsoft 365 | included; 4 notices; notices=sample; profile=sample; profile captured 2026-10-01T00:00:00Z |
 | Evaluated | 12/12 candidates |
@@ -34,7 +34,7 @@
 | [M365 MC-SAMPLE-001: [SAMPLE] Authentication methods: SMS sign-in will require a policy update](https://github.com/amex678/service-change-impact-workflow/blob/main/data/samples/m365-message-center.sample.json) | 2026-12-01 (fictional sample) | SMS authentication policy; primary sign-in flag absent | SMS is enabled for all users, but the profile omits `includeTargets[].isUsableForSignIn`. Enabled authentication is not proof of enabled SMS primary sign-in. | Needs investigation | Correct Issue 5 from Impacted to Needs investigation. Read the sign-in target flag and intended users; do not change the tenant. |
 | [Azure 493779: Retirement: Azure Disk Encryption](https://azure.microsoft.com/updates?id=493779) | 2028-09-15 | `virtualmachines-01`; ADE state absent | The VM inventory contains OS/size/disk facts but no ADE extension or guest encryption state. A Disk Encryption Set describes SSE/CMK and does not prove ADE use. | Needs investigation | Keep Issue 8; inspect ADE extensions and encryption state, not DES presence alone. |
 | [Azure 551523: Retirement: "Send data to Event Hubs & Storage (Preview)" retiring July 31, 2026](https://azure.microsoft.com/updates?id=551523) | 2026-07-31 | Azure Monitor resources; DCR feature settings not captured | The notice targets a specific preview export capability, not AMA generally. The inventory lacks DCR/export destination configuration proving whether this capability is used. | Needs investigation | Check DCR destinations and VM-client data export settings; if enabled, review a supported replacement. The deadline has passed, but observed data loss is not established. |
-| [Azure 560948: Retirement: Azure Reserved Virtual Machines Instances for select VM series](https://azure.microsoft.com/updates?id=560948) | 2026-07-01 | Captured VM series only; reservation orders excluded | `virtualmachines-01` is `Standard_D2s_v5`, outside the listed retiring reservation series. This excludes the captured VM-series match, not unrelated reservation purchases, renewal orders or billing. | Not impacted | No retirement remediation for this captured VM series. Review reservation orders separately if an account-wide billing assessment is needed. |
+| [Azure 560948: Retirement: Azure Reserved Virtual Machines Instances for select VM series](https://azure.microsoft.com/updates?id=560948) | 2026-07-01 | Captured VM series excluded; reservation orders not captured | `virtualmachines-01` is `Standard_D2s_v5`, outside the listed retiring series. The notice concerns reservation purchases/renewals; current VM size does not exclude affected orders elsewhere in the account. | Needs investigation | Review reservation orders, renewals and expirations in Issue 11. Preserve the captured VM-series exclusion without claiming account-wide absence of impact. |
 | [Azure 498749: Retirement: Microsoft Defender for Cloud Deprecation in Microsoft Azure Operated by 21Vianet Announcement](https://azure.microsoft.com/updates?id=498749) | 2026-08-18 | Subscription-level cloud context not explicitly captured | The notice is limited to Azure operated by 21Vianet. Captured resources are in Japan East, but no explicit subscription cloud identifier was recorded; do not turn that gap into a global no-impact conclusion. | Needs investigation | Confirm the subscription cloud. If AzureCloud, exclude this China-only notice; if AzureChinaCloud, assess the retired features. |
 | [Azure azure-monitor-data-collection-api-retirement: Azure Monitor Data Collection API Retirement](https://azure.microsoft.com/updates?id=azure-monitor-data-collection-api-retirement) | 2026-09-14 | `workspaces-01`, `components-01`; external senders excluded from capture | Workspace/component existence does not prove use of the legacy Data Collector API. The inventory has no sender endpoint, shared-key ingestion or DCR-based ingestion usage evidence. | Needs investigation | Keep Issue 2; inspect sender code/configuration and ingestion telemetry. Do not claim an outage or completed migration. |
 | [Azure 559311: Retirement: Azure Functions runtime v3 on Linux Consumption will stop running September 30, 2026](https://azure.microsoft.com/updates?id=559311) | 2026-09-30 | Captured Windows Function App and declared template | This enforcement requires both Linux Consumption and runtime v3. `reserved=false` identifies the captured Windows plan, and the template declares `FUNCTIONS_EXTENSION_VERSION=~4`; the required Linux/v3 combination is excluded. | Not impacted | No action for this captured app; do not generalize the result to apps outside this inventory. |
@@ -43,9 +43,13 @@
 
 ## 3. Details for Impacted and Needs investigation
 
-This is a reviewed replay with newly fetched public notices and the original six finding Issues. The original report artifact was missing; this document does not claim to recover that unpublished report. Inventory/profile facts remain the 2026-10-01 synthetic snapshot, not live environment observations.
+This is an AI-assisted evidence review of [live run 38012531004](https://github.com/amex678/service-change-impact-workflow/actions/runs/38012531004), all 12 delivered candidate rows, the original six finding Issues and four new investigation Issues. The run delivered Markdown, HTML and metadata, and the mandatory `verify-report` job passed. The original October 6 artifact was missing; this does not claim to recover that unpublished report. Inventory/profile facts remain the 2026-10-01 synthetic snapshot, not live environment observations.
 
-This review yields **2 Impacted, 3 Not impacted (explicitly limited scope), 7 Needs investigation, 0 Cannot evaluate**. All notices were readable; incomplete configuration is reported as Needs investigation rather than silently treated as no impact.
+This final review yields **2 Impacted, 2 Not impacted (explicitly limited scope), 8 Needs investigation, 0 Cannot evaluate**. All notices were readable; incomplete configuration is reported as Needs investigation rather than silently treated as no impact.
+
+The original agent's completion log listed the same 12 candidate keys: 3 Impacted, 3 Needs investigation and 6 Not impacted. Five verdicts change: `MC-SAMPLE-001` changes from Impacted to Needs investigation; Azure `557852`, `551523`, `560948` and `498749` change from Not impacted to Needs investigation because SCM/client, preview-export, reservation-order and subscription-cloud facts were not captured. The remaining seven verdicts are retained with explicit scope and missing facts.
+
+The delivered raw run incorrectly called `disks-02` a data disk in its table despite missing role evidence; this reviewed report corrects that assertion. Its broader reservation-investigation verdict is retained: excluding the captured v5 VM is not an account-wide reservation review. Shape/delivery validation is not a substitute for factual review. New investigation findings are [Issue 10](https://github.com/amex678/service-change-impact-workflow/issues/10), [Issue 11](https://github.com/amex678/service-change-impact-workflow/issues/11), [Issue 12](https://github.com/amex678/service-change-impact-workflow/issues/12) and [Issue 13](https://github.com/amex678/service-change-impact-workflow/issues/13). No duplicate original finding or new PR was created.
 
 ### Azure 500157: Standard HDD OS disks
 
@@ -96,6 +100,13 @@ This review yields **2 Impacted, 3 Not impacted (explicitly limited scope), 7 Ne
 - **Confirmed:** the retirement is limited to the 21Vianet environment, effective 2026-08-18.
 - **Gap:** the inventory has region values but no explicit cloud identifier. This subscription-wide match cannot be settled from an assumed cloud.
 - **Next step:** record the cloud and then exclude or assess the notice. No Defender setting was changed.
+
+### Azure 560948: Select VM-series reservations
+
+- **Source:** https://azure.microsoft.com/updates?id=560948
+- **Confirmed:** selected-series RI purchases/renewals are retired from 2026-07-01; existing reservations continue through their term.
+- **Scope:** `Standard_D2s_v5` is not a named retiring VM series. Reservation orders, renewals and expirations are not captured; this does not exclude account-wide reservation impact.
+- **Next step:** keep Issue 11 as Needs investigation and obtain reservation-order evidence. Do not infer a price increase, affected order or elapsed reservation from the current VM size.
 
 ### Azure azure-monitor-data-collection-api-retirement: Data Collector API
 

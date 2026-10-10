@@ -285,6 +285,7 @@ def safe_directory(directory: Path) -> None:
 
 def publish(candidates: dict, draft: str, output: Path, stage: Path | None = None,
             run_url: str | None = None, public_output: bool = False) -> int:
+    run_url = run_url or candidates.get("report_run_url")
     data = snapshot(candidates, run_url)
     markdown = canonical_report(data, draft, run_url, public_output)
     rendered = render_html(data, markdown)
