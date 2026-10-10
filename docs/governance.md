@@ -53,6 +53,14 @@ existing finding/PR context must support any creation request. The exact
 historical duplicate request fails this guard. This is an enforced validation
 step, not merely another prompt instruction.
 
+Final reference run 38018026348 passed the native pre-handler guard and all
+six jobs, delivered 12/12 verdicts, and created no additional remediation PR.
+Final unchanged run 38019824433 passed all six jobs, delivered a visible
+zero-candidate report, skipped the main analysis model, and preserved all 12
+assessment timestamps. Final CI 38018024059 passed 104 tests on Python 3.10
+and strict compiler/lock, Bicep and actionlint checks. Threat detection remains
+separate and enabled, including on the no-op path.
+
 ## Permissions and boundaries
 
 | Component | Access |

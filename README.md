@@ -2,7 +2,7 @@
 
 Turn Microsoft service-change notices into evidence-based, human-approved actions in GitHub.
 
-[Offline reproduction](docs/reproduce.md) · [Reviewed Pages report](https://amex678.github.io/service-change-impact-workflow/) · [Owner-only settings](docs/owner-settings.md) · [MIT license](LICENSE)
+[Offline reproduction](docs/reproduce.md) · [Reviewed Pages report](https://amex678.github.io/service-change-impact-workflow/) · [Pinned demo Release](https://github.com/amex678/service-change-impact-workflow/releases/tag/v0.1.0-demo-20261010) · [Owner-only settings](docs/owner-settings.md) · [MIT license](LICENSE)
 
 > **Status (2026-10-10): reviewed sample prototype.** The owner authorized making [amex678/service-change-impact-workflow](https://github.com/amex678/service-change-impact-workflow) public after checking its tracked history and outputs for real data and credentials. The [reviewed report](https://amex678.github.io/service-change-impact-workflow/) covers all 12 selected candidates: **2 Impacted, 2 Not impacted within stated scope, 8 Needs investigation**. It is an AI-assisted evidence review, not human approval or live-environment validation.
 
@@ -140,8 +140,16 @@ Reviewed on 2026-10-10:
 
 Not yet verified:
 
-- No-op skipping on GitHub Actions, human approval enforcement, real-environment accuracy or runtime compatibility.
+- Human approval enforcement, real-environment accuracy or runtime compatibility.
 - `infra-deploy.yml` against Azure; no deployment was performed.
+
+Follow-up verified on GitHub (2026-10-10):
+
+- [CI 38018024059](https://github.com/amex678/service-change-impact-workflow/actions/runs/38018024059): **104 tests** on Python 3.10, Bicep, actionlint and pinned strict workflow compilation/lock consistency.
+- [Reference reassessment 38018026348](https://github.com/amex678/service-change-impact-workflow/actions/runs/38018026348): all six jobs succeeded; 12/12 verdicts delivered, known-revision guards applied, existing findings received comments, and native pre-write duplicate validation passed.
+- [Unchanged no-op 38019824433](https://github.com/amex678/service-change-impact-workflow/actions/runs/38019824433): all six jobs succeeded; 0/0 report delivered, main analysis inference skipped, all 12 prior assessment records and their timestamps preserved. Separate threat detection still runs and can incur model cost.
+- A duplicate validation PR (14) was closed without merging. Its exact request is rejected by the mechanical guard; the original draft PR 9 remains open and unmerged.
+- [Owner-only settings](docs/owner-settings.md) remain unconfigured. No schedule, deployment identity, merge or M365 setting change was enabled.
 
 Verified on GitHub on 2026-10-06: unit tests, Bicep build and actionlint ([CI evidence](https://github.com/amex678/service-change-impact-workflow/actions/runs/37398436326)). The initial lint failure was resolved by disabling generated maintenance and adding a file-specific compatibility exception for gh-aw's `concurrency.queue`; other lint diagnostics remain enabled.
 
