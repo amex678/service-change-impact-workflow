@@ -14,7 +14,7 @@ param location string = resourceGroup().location
 param namePrefix string = 'scidemo'
 
 @description('PowerShell runtime version of the Function App.')
-param powerShellVersion string = '7.4'
+param powerShellVersion string = '7.6'
 
 var suffix = uniqueString(resourceGroup().id)
 var storageConnection = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}'
