@@ -192,6 +192,13 @@ jobs:
 
 safe-outputs:
   steps:
+    - name: Checkout trusted output-validation scripts
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+        sparse-checkout: |
+          .github
+          scripts
     - name: Download the validated report before applying safe outputs
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
@@ -199,7 +206,7 @@ safe-outputs:
         path: verified-report
     - name: Reject duplicate finding and PR creation before writes
       env:
-        GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/gh-aw/agent_output.json
+        GH_AW_AGENT_OUTPUT: /tmp/gh-aw/agent_output.json
       run: |
         python3 scripts/check_safe_outputs.py \
           --candidates verified-report/run/report/candidates.json \

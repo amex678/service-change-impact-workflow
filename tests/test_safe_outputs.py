@@ -54,6 +54,9 @@ class CreationGuardTests(unittest.TestCase):
         compiled = (ROOT / ".github" / "workflows" / "service-change-impact.lock.yml").read_text(encoding="utf-8")
         self.assertLess(compiled.index("name: Reject duplicate finding and PR creation before writes"),
                         compiled.index("name: Process Safe Outputs"))
+        self.assertLess(compiled.index("name: Checkout trusted output-validation scripts"),
+                        compiled.index("name: Download the validated report before applying safe outputs"))
+        self.assertIn("GH_AW_AGENT_OUTPUT: /tmp/gh-aw/agent_output.json", compiled)
 
 
 if __name__ == "__main__":
