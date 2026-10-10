@@ -1,5 +1,10 @@
 # Your inventory
 
+This repository is a **public synthetic demo**. `*.json` files in this directory
+are ignored, and public workflow/report validation rejects real inventory or
+tenant data even when sanitized. Do not force-add real exports here. Use a
+separate, reviewed private copy for the real-data setup described below.
+
 Put **sanitized** files here to replace the samples in `data/samples/`:
 
 - `azure-inventory.json`: output of `scripts/sanitize_azure_inventory.py`
